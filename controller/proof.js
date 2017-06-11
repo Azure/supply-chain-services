@@ -1,3 +1,5 @@
+'use strict';
+
 var proof = require(`../services/proof.js`),
     restify = require('restify'),
     validate = require('jsonschema').validate;
@@ -44,7 +46,7 @@ module.exports = {
             });
         }
         else {
-            next(new restify.ResourceNotFoundError("query format is ?model_name=xyz&model_group=xyz or ?model_name=xyz"));
+            next(new restify.ResourceNotFoundError("query format is ?tracking_id=xyz"));
         }
     },
     post: function (req, res, next) {

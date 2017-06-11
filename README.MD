@@ -28,7 +28,7 @@ var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 {
     "tracking_id" : "tracking_id_1",
     "encrypted_proof" : "YmFzZTY0IGRlY29kZXI=",
-    "public_proof" : "public unencrypted proof"
+    "public_proof" : "{producer_id:farmer1, email:test@farmer1.de}"
 }
 ```
 
