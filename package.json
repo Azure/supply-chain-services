@@ -18,6 +18,7 @@
     "node-rsa": "^0.4.2",
     "restify": "^4.3.0",
     "restify-validator": "^0.3.1",
+    "sha256": "^0.2.0",
     "validator": "^7.0.0",
     "web3": "^0.19.0"
   },

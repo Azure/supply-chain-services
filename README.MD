@@ -29,7 +29,10 @@ var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 {
     "tracking_id" : "tracking_id_1",
     "encrypted_proof" : "This content will be encrypted before storing"",
-    "public_proof" : "{producer_id:farmer1, email:test@farmer1.de}"
+    "public_proof" : {
+        "producer_id": "farmer1",
+        "email": "test@farmer1.de"
+    }
 }
 ```
 
@@ -49,7 +52,10 @@ var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
     "tracking_id" : "tracking_id_2",
     "previous_tracking_id" : "tracking_id_1",
     "encrypted_proof" : "This content will be encrypted before storing",
-    "public_proof" : "public unencrypted proof"
+    "public_proof" : {
+        "producer_id": "farmer2",
+        "email": "test@farmer2.de"
+    }
 }
 ```
 ## GET
@@ -61,7 +67,13 @@ After performing the above `POST` a GET on `https://localhost/api/proof?tracking
         "tracking_id": "tracking_id_1",
         "owner": "0x422d337a0375a5108c48706901587a80c8dbef7c",
         "encrypted_proof": "Ymoi1sWmG1GRx9CI9QVsh3PKCgqOesH91OADTYydxRkwU2ee9me3wMykVxX2n2AI//uMUqyMmnm1CMbzjS598gk5pZCskhlJ4tMY/ZGXxm7gBZ/3snoNHKuaAxFASMgAdrjH+/WBnaQYsH55wgKc03e+uhBj6yTeXa06aCNFLKQ=",
-        "public_proof": "{producer_id:farmer1, email:test@farmer1.de}",
+        "public_proof": {
+            "encrypted_proof_hash": "7898fdd63d28c88d461e3d8f6fd3cad5b1140379d3aa6bf0ba2a4664376468db",
+            "public_proof": {
+                "producer_id": "farmer1",
+                "email": "test@farmer1.de"
+            }
+        },
         "previous_tracking_id": "root"
     }
 ]
@@ -73,7 +85,13 @@ while a GET on `https://localhost/api/proof?tracking_id=tracking_id_1&decrypt=tr
         "tracking_id": "tracking_id_1",
         "owner": "0x422d337a0375a5108c48706901587a80c8dbef7c",
         "encrypted_proof": "This content will be encrypted before storing",
-        "public_proof": "{producer_id:farmer1, email:test@farmer1.de}",
+        "public_proof": {
+            "encrypted_proof_hash": "7898fdd63d28c88d461e3d8f6fd3cad5b1140379d3aa6bf0ba2a4664376468db",
+            "public_proof": {
+                "producer_id": "farmer1",
+                "email": "test@farmer1.de"
+            }
+        },
         "previous_tracking_id": "root"
     }
 ]
@@ -86,14 +104,26 @@ If we now perform the above `PATCH` and `PUT` operation, a GET on `https://local
         "tracking_id": "tracking_id_2",
         "owner": "0x422d337a0375a5108c48706901587a80c8dbef7c",
         "encrypted_proof": "Ymoi1sWmG1GRx9CI9QVsh3PKCgqOesH91OADTYydxRkwU2ee9me3wMykVxX2n2AI//uMUqyMmnm1CMbzjS598gk5pZCskhlJ4tMY/ZGXxm7gBZ/3snoNHKuaAxFASMgAdrjH+/WBnaQYsH55wgKc03e+uhBj6yTeXa06aCNFLKQ=",
-        "public_proof": "public unencrypted proof",
+        "public_proof": {
+            "encrypted_proof_hash": "7898fdd63d28c88d461e3d8f6fd3cad5b1140379d3aa6bf0ba2a4664376468db",
+            "public_proof": {
+                "producer_id": "farmer2",
+                "email": "test@farmer2.de"
+            }
+        },
         "previous_tracking_id": "tracking_id_1"
     },
     {
         "tracking_id": "tracking_id_1",
         "owner": "0x422d337a0375a5108c48706901587a80c8dbef7c",
         "encrypted_proof": "Ymoi1sWmG1GRx9CI9QVsh3PKCgqOesH91OADTYydxRkwU2ee9me3wMykVxX2n2AI//uMUqyMmnm1CMbzjS598gk5pZCskhlJ4tMY/ZGXxm7gBZ/3snoNHKuaAxFASMgAdrjH+/WBnaQYsH55wgKc03e+uhBj6yTeXa06aCNFLKQ=",
-        "public_proof": "{producer_id:farmer1, email:test@farmer1.de}",
+        "public_proof": {
+            "encrypted_proof_hash": "7898fdd63d28c88d461e3d8f6fd3cad5b1140379d3aa6bf0ba2a4664376468db",
+            "public_proof": {
+                "producer_id": "farmer1",
+                "email": "test@farmer1.de"
+            }
+        },
         "previous_tracking_id": "root"
     }
 ]

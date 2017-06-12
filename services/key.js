@@ -87,15 +87,15 @@ module.exports = {
         });
     },
     encrypt: function(publicKey, content){
-        var rsa = new nodeRSA({b: 512}); 
+        var rsa = new nodeRSA(); 
         rsa.importKey(publicKey, 'pkcs1-public-pem');
-        return rsa.encrypt(content, 'base64', 'string');
+        return rsa.encrypt(content, 'base64', 'UTF8');
     },
     decrypt: function(userId, keyId, content, next){
         var rsa = new nodeRSA(); 
         ReadEntity(keyTableName, userId, keyId).then(function (res) {
             rsa.importKey(res.PrivateKey._, 'pkcs1-private-pem');
-            next(rsa.decrypt(content).toString('UTF8'));
+            next(rsa.decrypt(content, 'UTF8'));
         },
         function (err) { next(content); });
     }

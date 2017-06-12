@@ -2,6 +2,7 @@
 var nconf = require('nconf'),
     Web3 = require('web3'),
     web3 = new Web3(),
+    sha256 = require('sha256'),
     key = require('./key.js');
 
 nconf.argv()
@@ -25,7 +26,7 @@ function callGetProof(trackingId, decrypt, proofs, next){
                     "tracking_id" : trackingId,
                     "owner" : result[0],
                     "encrypted_proof" : encryptedProofValue,
-                    "public_proof" : result[2],
+                    "public_proof" : JSON.parse(result[2]),
                     "previous_tracking_id" : result[3]
                 });
                 var previousTrackingId =  result[3];
@@ -51,6 +52,12 @@ function callGetProof(trackingId, decrypt, proofs, next){
 
 function createProof(proof, next){
     key.createKeyIfNotExist(userId, proof.tracking_id, function(keyValue){
+        var hash = sha256(proof.encrypted_proof);
+        hash.toUpperCase();
+        proof.public_proof = JSON.stringify({
+            encrypted_proof_hash : hash,
+            public_proof : proof.public_proof
+        });
         proof.encrypted_proof = key.encrypt(keyValue, proof.encrypted_proof);
         next(proof);
     });

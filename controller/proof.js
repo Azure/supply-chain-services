@@ -11,7 +11,7 @@ var proofPostSchema = {
     "properties": {
         "tracking_id": { "type": "string" },
         "encrypted_proof": { "type": "string" },
-        "public_proof": { "type": "string" }
+        "public_proof": { "type": "object" }
     },
     "required": ["tracking_id", "encrypted_proof", "public_proof"]
 };
@@ -22,7 +22,7 @@ var proofPutSchema = {
         "tracking_id": { "type": "string" },
         "previous_tracking_id" : { "type" : "string" },
         "encrypted_proof": { "type": "string" },
-        "public_proof": { "type": "string" }
+        "public_proof": { "type": "object" }
     },
     "required": ["tracking_id", "previous_tracking_id", "encrypted_proof", "public_proof"]
 };
