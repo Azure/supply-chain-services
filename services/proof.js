@@ -1,11 +1,14 @@
 'use strict';
 var nconf = require('nconf'),
     Web3 = require('web3'),
-    web3 = new Web3();
+    web3 = new Web3(),
+    key = require('./key.js');
 
 nconf.argv()
    .env()
    .file({ file: 'config.json' });
+
+const userId = "un-authenticated";
 
 const gethRpcEndpoint = nconf.get('geth_rpc_endpoint');
 const contractAddress = nconf.get('deployed_contract_address');
@@ -14,22 +17,30 @@ const proofAbi = [ { "constant": true, "inputs": [ { "name": "trackingId", "type
 web3.setProvider(new Web3.providers.HttpProvider(gethRpcEndpoint));
 var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 
-function callGetProof(trackingId, proofs, next){
+function callGetProof(trackingId, decrypt, proofs, next){
     contractInstance.getProof.call(trackingId , function(error, result){
         if (!error) {
-            proofs.push({
-                "tracking_id" : trackingId,
-                "owner" : result[0],
-                "encrypted_proof" : result[1],
-                "public_proof" : result[2],
-                "previous_tracking_id" : result[3]
-            });
-            var previousTrackingId =  result[3];
-            if ((previousTrackingId != "root" ) && (previousTrackingId != "")) {
-                callGetProof(previousTrackingId, proofs, next)
+            let pushProof = function(encryptedProofValue){
+                proofs.push({
+                    "tracking_id" : trackingId,
+                    "owner" : result[0],
+                    "encrypted_proof" : encryptedProofValue,
+                    "public_proof" : result[2],
+                    "previous_tracking_id" : result[3]
+                });
+                var previousTrackingId =  result[3];
+                if ((previousTrackingId != "root" ) && (previousTrackingId != "")) {
+                    callGetProof(previousTrackingId, decrypt, proofs, next)
+                }
+                else {
+                    next(proofs);
+                }
+            }
+            if (decrypt == "true") {
+                key.decrypt(userId, trackingId, result[1], pushProof);
             }
             else {
-                next(proofs);
+                pushProof(result[1]);
             }
         }
         else {
@@ -37,29 +48,40 @@ function callGetProof(trackingId, proofs, next){
         }
     });
 }
+
+function createProof(proof, next){
+    key.createKeyIfNotExist(userId, proof.tracking_id, function(keyValue){
+        proof.encrypted_proof = key.encrypt(keyValue, proof.encrypted_proof);
+        next(proof);
+    });
+}
 module.exports = {
-    getProof: function (trackingId, next) {
+    getProof: function (trackingId, decrypt, next) {
         var proofs = [];
-        callGetProof(trackingId, proofs, next);
+        callGetProof(trackingId, decrypt, proofs, next);
     },
     startTracking: function(proof, next) {
-        contractInstance.startTracking(proof.tracking_id, proof.encrypted_proof, proof.public_proof, {from: account, gas : 2000000}, function(error, result){
-            if (!error) {
-                next(JSON.stringify(result));
-            }
-            else {
-                next(error);
-            }
+        createProof(proof, function(proof) {
+            contractInstance.startTracking(proof.tracking_id, proof.encrypted_proof, proof.public_proof, {from: account, gas : 2000000}, function(error, result){
+                if (!error) {
+                    next(JSON.stringify(result));
+                }
+                else {
+                    next(error);
+                }
+            });
         });
     },
     storeProof: function(proof, next) {
-        contractInstance.storeProof(proof.tracking_id, proof.previous_tracking_id, proof.encrypted_proof, proof.public_proof, {from: account, gas : 2000000}, function(error, result){
-            if (!error) {
-                next(result);
-            }
-            else {
-                next(error);
-            }
+        createProof(proof, function(proof) {
+            contractInstance.storeProof(proof.tracking_id, proof.previous_tracking_id, proof.encrypted_proof, proof.public_proof, {from: account, gas : 2000000}, function(error, result){
+                if (!error) {
+                    next(result);
+                }
+                else {
+                    next(error);
+                }
+            });
         });
     },
     transfer: function(transfer, next) {

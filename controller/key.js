@@ -20,7 +20,7 @@ module.exports = {
     get: function (req, res, next) {
         req.assert('key_id', 'Invalid key_id').notEmpty();
         if (!req.validationErrors()) {
-            proof.getKey(userId, req.query.key_id, function (result) {
+            proof.getPublicKey(userId, req.query.key_id, function (result) {
                 res.send(result);
                 next();
             });

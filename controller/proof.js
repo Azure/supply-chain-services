@@ -39,14 +39,15 @@ var proofPatchSchema = {
 module.exports = {
     get: function (req, res, next) {
         req.assert('tracking_id', 'Invalid tracking_id').notEmpty();
+        req.assert('decrypt', 'Invalid decrypt value - needs to be a Boolean').notEmpty();
         if (!req.validationErrors()) {
-            proof.getProof(req.query.tracking_id, function (result) {
+            proof.getProof(req.query.tracking_id, req.query.decrypt, function (result) {
                 res.send(result);
                 next();
             });
         }
         else {
-            next(new restify.ResourceNotFoundError("query format is ?tracking_id=xyz"));
+            next(new restify.ResourceNotFoundError("query format is ?tracking_id=xyz&decrypt=true"));
         }
     },
     post: function (req, res, next) {

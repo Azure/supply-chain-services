@@ -28,7 +28,7 @@ var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 ```
 {
     "tracking_id" : "tracking_id_1",
-    "encrypted_proof" : "YmFzZTY0IGRlY29kZXI=",
+    "encrypted_proof" : "This content will be encrypted before storing"",
     "public_proof" : "{producer_id:farmer1, email:test@farmer1.de}"
 }
 ```
@@ -48,19 +48,31 @@ var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 {
     "tracking_id" : "tracking_id_2",
     "previous_tracking_id" : "tracking_id_1",
-    "encrypted_proof" : "YmFzZTY0IGRlY29kZXI=",
+    "encrypted_proof" : "This content will be encrypted before storing",
     "public_proof" : "public unencrypted proof"
 }
 ```
 ## GET
 `GET` retrieves a proof and all it's previous proofs and returns it as an array. The `tracking_id` is encoded in the URL.
-After performing the above `POST` a GET on `https://localhost/api/proof?tracking_id=tracking_id_1` returns the following json: 
+After performing the above `POST` a GET on `https://localhost/api/proof?tracking_id=tracking_id_1&decrypt=false` returns the following json: 
 ```
 [
     {
         "tracking_id": "tracking_id_1",
         "owner": "0x422d337a0375a5108c48706901587a80c8dbef7c",
-        "encrypted_proof": "YmFzZTY0IGRlY29kZXI=",
+        "encrypted_proof": "Ymoi1sWmG1GRx9CI9QVsh3PKCgqOesH91OADTYydxRkwU2ee9me3wMykVxX2n2AI//uMUqyMmnm1CMbzjS598gk5pZCskhlJ4tMY/ZGXxm7gBZ/3snoNHKuaAxFASMgAdrjH+/WBnaQYsH55wgKc03e+uhBj6yTeXa06aCNFLKQ=",
+        "public_proof": "{producer_id:farmer1, email:test@farmer1.de}",
+        "previous_tracking_id": "root"
+    }
+]
+```
+while a GET on `https://localhost/api/proof?tracking_id=tracking_id_1&decrypt=true` returns the `encrypted_proof` decrypted. Note: decryption will only take place if the caller has access to the private key. 
+```
+[
+    {
+        "tracking_id": "tracking_id_1",
+        "owner": "0x422d337a0375a5108c48706901587a80c8dbef7c",
+        "encrypted_proof": "This content will be encrypted before storing",
         "public_proof": "{producer_id:farmer1, email:test@farmer1.de}",
         "previous_tracking_id": "root"
     }
@@ -73,14 +85,14 @@ If we now perform the above `PATCH` and `PUT` operation, a GET on `https://local
     {
         "tracking_id": "tracking_id_2",
         "owner": "0x422d337a0375a5108c48706901587a80c8dbef7c",
-        "encrypted_proof": "YmFzZTY0IGRlY29kZXI=",
+        "encrypted_proof": "Ymoi1sWmG1GRx9CI9QVsh3PKCgqOesH91OADTYydxRkwU2ee9me3wMykVxX2n2AI//uMUqyMmnm1CMbzjS598gk5pZCskhlJ4tMY/ZGXxm7gBZ/3snoNHKuaAxFASMgAdrjH+/WBnaQYsH55wgKc03e+uhBj6yTeXa06aCNFLKQ=",
         "public_proof": "public unencrypted proof",
         "previous_tracking_id": "tracking_id_1"
     },
     {
         "tracking_id": "tracking_id_1",
         "owner": "0x422d337a0375a5108c48706901587a80c8dbef7c",
-        "encrypted_proof": "YmFzZTY0IGRlY29kZXI=",
+        "encrypted_proof": "Ymoi1sWmG1GRx9CI9QVsh3PKCgqOesH91OADTYydxRkwU2ee9me3wMykVxX2n2AI//uMUqyMmnm1CMbzjS598gk5pZCskhlJ4tMY/ZGXxm7gBZ/3snoNHKuaAxFASMgAdrjH+/WBnaQYsH55wgKc03e+uhBj6yTeXa06aCNFLKQ=",
         "public_proof": "{producer_id:farmer1, email:test@farmer1.de}",
         "previous_tracking_id": "root"
     }
