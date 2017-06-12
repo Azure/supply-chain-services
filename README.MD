@@ -137,12 +137,19 @@ IMPORTANT: this api needs only to accept calls from autheticated users. The user
 POST creates a new key with the provided `key_id` and returns a `409` if a key with `key_id` already exists.
 ```
 {
-    "key_id" : "tracking_id_10"
+    "key_id" : "tracking_id_1"
 }
 ```
 
 ## GET
-The `tracking_id` is encoded in the URL.
+The `key_id` is encoded in the URL. The api only returns the public but never the private key
 ```
-https://localhost/api/key?key_id=tracking_id_10
+https://localhost/api/key?key_id=tracking_id_1
+```
+returns
+```
+{
+    "key_id": "tracking_id_1",
+    "public_key": "-----BEGIN RSA PUBLIC KEY-----\nMEgCQQDaeW3dIGRrE1ZBwWyFNJc7iZPvSTNXHN5LIbHCAOCwp/W+Fy7PLaKyS4JT\nVhjV1/AmRmwnbeUI9/HZEVGaF573AgMBAAE=\n-----END RSA PUBLIC KEY-----"
+}
 ```
