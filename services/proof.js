@@ -33,7 +33,7 @@ function callGetProof(trackingId, proofs, next){
             }
         }
         else {
-            next(proofs);
+            next(error);
         }
     });
 }

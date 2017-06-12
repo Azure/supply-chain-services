@@ -21,9 +21,10 @@ you then can create an instance of the contract by using the abi and the address
 var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 ```
 
-# API calls
+# Proof API calls
 
-## PUT
+## POST
+`POST` creates a measurement for new produce - basically the starting point of the chain. `tracking_id` becomes the resource identifier and only one `POST` per `tracking_id` is a allowed. Or in other words, the initial `POST` is immutable.
 ```
 {
     "tracking_id" : "tracking_id_1",
@@ -33,9 +34,73 @@ var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 ```
 
 ## PATCH
+`PATCH` transfers the ownership to a new account to allow adding additional proofs to the produce. After a succesful `PATCH`, the owner of the `trasnfer_to` account can use the specified `tracking_id` as it's `previous_tracking_id` in a subsequent `PUT`. 
 ```
 {
-    "tracking_id" : "tracking_id_4",
+    "tracking_id" : "tracking_id_1",
     "transfer_to" : "0x9c45e05370b509c416c4e4981c13c6b023b574c0"
 }
+```
+
+## PUT
+`PUT` adds a new proof to the chain, using a new `tracking_id`. `PUT`onyl executes if the "previous_tracking_id" has been transfered to the executing account. 
+```
+{
+    "tracking_id" : "tracking_id_2",
+    "previous_tracking_id" : "tracking_id_1",
+    "encrypted_proof" : "YmFzZTY0IGRlY29kZXI=",
+    "public_proof" : "public unencrypted proof"
+}
+```
+## GET
+`GET` retrieves a proof and all it's previous proofs and returns it as an array. The `tracking_id` is encoded in the URL.
+After performing the above `POST` a GET on `https://localhost/api/proof?tracking_id=tracking_id_1` returns the following json: 
+```
+[
+    {
+        "tracking_id": "tracking_id_1",
+        "owner": "0x422d337a0375a5108c48706901587a80c8dbef7c",
+        "encrypted_proof": "YmFzZTY0IGRlY29kZXI=",
+        "public_proof": "{producer_id:farmer1, email:test@farmer1.de}",
+        "previous_tracking_id": "root"
+    }
+]
+```
+If we now perform the above `PATCH` and `PUT` operation, a GET on `https://localhost/api/proof?tracking_id=tracking_id_2` returns the following json: 
+```
+[
+[
+    {
+        "tracking_id": "tracking_id_2",
+        "owner": "0x422d337a0375a5108c48706901587a80c8dbef7c",
+        "encrypted_proof": "YmFzZTY0IGRlY29kZXI=",
+        "public_proof": "public unencrypted proof",
+        "previous_tracking_id": "tracking_id_1"
+    },
+    {
+        "tracking_id": "tracking_id_1",
+        "owner": "0x422d337a0375a5108c48706901587a80c8dbef7c",
+        "encrypted_proof": "YmFzZTY0IGRlY29kZXI=",
+        "public_proof": "{producer_id:farmer1, email:test@farmer1.de}",
+        "previous_tracking_id": "root"
+    }
+]
+]
+```
+
+# Key API calls
+IMPORTANT: this api needs only to accept calls from autheticated users. The user Id will be used as the `PartitionKey` in the key storage.
+
+## POST
+POST creates a new key with the provided `key_id` and returns a `409` if a key with `key_id` already exists.
+```
+{
+    "key_id" : "tracking_id_10"
+}
+```
+
+## GET
+The `tracking_id` is encoded in the URL.
+```
+https://localhost/api/key?key_id=tracking_id_10
 ```
