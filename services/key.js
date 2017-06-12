@@ -58,7 +58,7 @@ module.exports = {
                 public_key: res.PublicKey._
             });
         },
-        function (err) { next(err); });
+        function (err) { next(null); });
     },
     createKey: function(userId, keyId, next) {
         let key = generateNewKey();

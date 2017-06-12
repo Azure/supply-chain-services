@@ -21,7 +21,12 @@ module.exports = {
         req.assert('key_id', 'Invalid key_id').notEmpty();
         if (!req.validationErrors()) {
             proof.getPublicKey(userId, req.query.key_id, function (result) {
-                res.send(result);
+                if (result != null) {
+                    res.send(result);
+                }
+                else {
+                    next(new restify.ResourceNotFoundError("No resource with key_id " + req.query.key_id));
+                }
                 next();
             });
         }

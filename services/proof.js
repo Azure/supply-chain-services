@@ -22,19 +22,26 @@ function callGetProof(trackingId, decrypt, proofs, next){
     contractInstance.getProof.call(trackingId , function(error, result){
         if (!error) {
             let pushProof = function(encryptedProofValue){
-                proofs.push({
-                    "tracking_id" : trackingId,
-                    "owner" : result[0],
-                    "encrypted_proof" : encryptedProofValue,
-                    "public_proof" : JSON.parse(result[2]),
-                    "previous_tracking_id" : result[3]
-                });
-                var previousTrackingId =  result[3];
-                if ((previousTrackingId != "root" ) && (previousTrackingId != "")) {
-                    callGetProof(previousTrackingId, decrypt, proofs, next)
+                // check if we got a valid proof
+                if (result[3].length > 0)
+                {
+                    proofs.push({
+                        "tracking_id" : trackingId,
+                        "owner" : result[0],
+                        "encrypted_proof" : encryptedProofValue,
+                        "public_proof" : result[2].length > 0 ? JSON.parse(result[2]) : result[2],
+                        "previous_tracking_id" : result[3]
+                    });
+                    var previousTrackingId =  result[3];
+                    if ((previousTrackingId != "root" ) && (previousTrackingId != "")) {
+                        callGetProof(previousTrackingId, decrypt, proofs, next)
+                    }
+                    else {
+                        next(proofs);
+                    }
                 }
                 else {
-                    next(proofs);
+                    next(null);
                 }
             }
             if (decrypt == "true") {
@@ -45,7 +52,7 @@ function callGetProof(trackingId, decrypt, proofs, next){
             }
         }
         else {
-            next(error);
+            next(null);
         }
     });
 }
