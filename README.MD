@@ -28,7 +28,9 @@ var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 ```
 {
     "tracking_id" : "tracking_id_1",
-    "encrypted_proof" : "This content will be encrypted before storing"",
+    "encrypted_proof": {
+        "proof": "This content will be encrypted before storing"
+    },
     "public_proof" : {
         "producer_id": "farmer1",
         "email": "test@farmer1.de"
@@ -51,7 +53,9 @@ var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 {
     "tracking_id" : "tracking_id_2",
     "previous_tracking_id" : "tracking_id_1",
-    "encrypted_proof" : "This content will be encrypted before storing",
+    "encrypted_proof": {
+        "proof": "This content will be encrypted before storing"
+    },
     "public_proof" : {
         "producer_id": "farmer2",
         "email": "test@farmer2.de"
@@ -66,7 +70,7 @@ After performing the above `POST` a GET on `https://localhost/api/proof?tracking
     {
         "tracking_id": "tracking_id_1",
         "owner": "0x422d337a0375a5108c48706901587a80c8dbef7c",
-        "encrypted_proof": "Ymoi1sWmG1GRx9CI9QVsh3PKCgqOesH91OADTYydxRkwU2ee9me3wMykVxX2n2AI//uMUqyMmnm1CMbzjS598gk5pZCskhlJ4tMY/ZGXxm7gBZ/3snoNHKuaAxFASMgAdrjH+/WBnaQYsH55wgKc03e+uhBj6yTeXa06aCNFLKQ=",
+        "encrypted_proof": "RolsKpMso+ZnOHq4YeaQ3chH1aWfng8GPMsw/HdhE5PLyrb4RtgHONWuLqO+ZSBz0cUm5bTzUXLvlrWk4Um7XyBvKccDv9/dEAP3pIO+G9w70qtxKbpeZpdEnR2kAbatuOD5rrFUI4fNJj7NoUncY59o7ppMX3xfDp7U7n9GzAo4Z0667EKw3YNM4gParDKYpuhXcupjN7Xr77SAMpkRF29lxrS23EhXpQ368aUzgdZP5A0YBidI1Ah48sjdroXh",
         "public_proof": {
             "encrypted_proof_hash": "7898fdd63d28c88d461e3d8f6fd3cad5b1140379d3aa6bf0ba2a4664376468db",
             "public_proof": {
@@ -84,9 +88,11 @@ while a GET on `https://localhost/api/proof?tracking_id=tracking_id_1&decrypt=tr
     {
         "tracking_id": "tracking_id_1",
         "owner": "0x422d337a0375a5108c48706901587a80c8dbef7c",
-        "encrypted_proof": "This content will be encrypted before storing",
+        "encrypted_proof": {
+            "value": "This content will be encrypted before storing"
+        },
         "public_proof": {
-            "encrypted_proof_hash": "7898fdd63d28c88d461e3d8f6fd3cad5b1140379d3aa6bf0ba2a4664376468db",
+            "encrypted_proof_hash": "ef4089c73b92e128ac68ebc2e26f6893eec5f1ab4607de2752c73e2a143a1375",
             "public_proof": {
                 "producer_id": "farmer1",
                 "email": "test@farmer1.de"

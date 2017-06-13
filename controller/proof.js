@@ -10,10 +10,10 @@ var proofPostSchema = {
     "type": "object",
     "properties": {
         "tracking_id": { "type": "string" },
-        "encrypted_proof": { "type": "string" },
+        "proof_to_encrypt": { "type": "object" },
         "public_proof": { "type": "object" }
     },
-    "required": ["tracking_id", "encrypted_proof", "public_proof"]
+    "required": ["tracking_id", "proof_to_encrypt", "public_proof"]
 };
 var proofPutSchema = {
     "id": "/ProofPost",
@@ -21,10 +21,10 @@ var proofPutSchema = {
     "properties": {
         "tracking_id": { "type": "string" },
         "previous_tracking_id" : { "type" : "string" },
-        "encrypted_proof": { "type": "string" },
+        "proof_to_encrypt": { "type": "object" },
         "public_proof": { "type": "object" }
     },
-    "required": ["tracking_id", "previous_tracking_id", "encrypted_proof", "public_proof"]
+    "required": ["tracking_id", "previous_tracking_id", "proof_to_encrypt", "public_proof"]
 };
 var proofPatchSchema = {
     "id": "/ProofPost",
@@ -63,7 +63,7 @@ module.exports = {
             });
         }
         else {
-            error(new restify.InvalidArgumentError("invalid schema - correct schema is " + JSON.stringify(proofPostSchema)));
+            next(new restify.InvalidArgumentError("invalid schema - correct schema is " + JSON.stringify(proofPostSchema)));
         }
     },
     put: function (req, res, next) {

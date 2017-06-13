@@ -21,14 +21,15 @@ var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 function callGetProof(trackingId, decrypt, proofs, next){
     contractInstance.getProof.call(trackingId , function(error, result){
         if (!error) {
-            let pushProof = function(encryptedProofValue){
+            let pushProof = function(encryptedProofStr){
+                var encryptedProofJson = encryptedProofStr;
                 // check if we got a valid proof
                 if (result[3].length > 0)
                 {
                     proofs.push({
                         "tracking_id" : trackingId,
                         "owner" : result[0],
-                        "encrypted_proof" : encryptedProofValue,
+                        "encrypted_proof" : encryptedProofJson,
                         "public_proof" : result[2].length > 0 ? JSON.parse(result[2]) : result[2],
                         "previous_tracking_id" : result[3]
                     });
@@ -45,7 +46,9 @@ function callGetProof(trackingId, decrypt, proofs, next){
                 }
             }
             if (decrypt == "true") {
-                key.decrypt(userId, trackingId, result[1], pushProof);
+                key.decrypt(userId, trackingId, result[1], function(decrypted) {
+                    pushProof(decrypted.length==0 ? {} : JSON.parse(decrypted));     
+                }); 
             }
             else {
                 pushProof(result[1]);
@@ -59,13 +62,14 @@ function callGetProof(trackingId, decrypt, proofs, next){
 
 function createProof(proof, next){
     key.createKeyIfNotExist(userId, proof.tracking_id, function(keyValue){
-        var hash = sha256(proof.encrypted_proof);
+        var proofToEncryptStr = JSON.stringify(proof.proof_to_encrypt);
+        var hash = sha256(proofToEncryptStr);
         hash.toUpperCase();
         proof.public_proof = JSON.stringify({
             encrypted_proof_hash : hash,
             public_proof : proof.public_proof
         });
-        proof.encrypted_proof = key.encrypt(keyValue, proof.encrypted_proof);
+        proof.encrypted_proof = key.encrypt(keyValue, proofToEncryptStr);
         next(proof);
     });
 }
