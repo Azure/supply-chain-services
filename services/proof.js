@@ -64,9 +64,8 @@ function createProof(proof, next){
     key.createKeyIfNotExist(userId, proof.tracking_id, function(keyValue){
         var proofToEncryptStr = JSON.stringify(proof.proof_to_encrypt);
         var hash = sha256(proofToEncryptStr);
-        hash.toUpperCase();
         proof.public_proof = JSON.stringify({
-            encrypted_proof_hash : hash,
+            encrypted_proof_hash : hash.toUpperCase(),
             public_proof : proof.public_proof
         });
         proof.encrypted_proof = key.encrypt(keyValue, proofToEncryptStr);
@@ -79,7 +78,7 @@ module.exports = {
         callGetProof(trackingId, decrypt, proofs, next);
     },
     startTracking: function(proof, next) {
-        createProof(proof, function(proof) {
+         createProof(proof, function(proof) {
             contractInstance.startTracking(proof.tracking_id, proof.encrypted_proof, proof.public_proof, {from: account, gas : 2000000}, function(error, result){
                 if (!error) {
                     next(JSON.stringify(result));

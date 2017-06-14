@@ -20,6 +20,8 @@ module.exports = {
     get: function (req, res, next) {
         req.assert('key_id', 'Invalid key_id').notEmpty();
         if (!req.validationErrors()) {
+            userId = encodeURIComponent(userId);
+            req.query.key_id = encodeURIComponent(req.query.key_id);
             proof.getPublicKey(userId, req.query.key_id, function (result) {
                 if (result != null) {
                     res.send(result);
@@ -36,6 +38,8 @@ module.exports = {
     },
     post: function (req, res, next) {
         if (validate(req.body, keyPostSchema).valid) {
+            userId = encodeURIComponent(userId);
+            req.body.key_id = encodeURIComponent(req.body.key_id);
             proof.createKey(userId, req.body.key_id, function(result){
                 res.send(result);
                 next();

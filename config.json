@@ -1,6 +1,6 @@
 {
-   "deployed_contract_address" : "0x06dabbafbd50acdd0bb2ca011c00a84de47ae9f6",
-   "account_address" : "0x422d337a0375a5108c48706901587a80c8dbef7c",
+   "deployed_contract_address" : "0x417b622733e1a4e9f7c2747eca1d648f5acbbf76",
+   "account_address" : "0x82caf6274f2e38c24302a436ae35f59df8d44311",
    "geth_rpc_endpoint" : "http://localhost:8545",
    "geth_rpc_private_endpoint" : "http://10.0.0.4:8545",
    "AZURE_STORAGE_CONNECTION_STRING" : "DefaultEndpointsProtocol=https;AccountName=iberat2keys;AccountKey=rHsnsvuMQF5WZy1kUqzJSv23gEU0gjmGlaeVqzdj6QFZrwIACdpEJ+EjeXQyKa3zSRG3A6oPTIcrgatBkcPclA==;EndpointSuffix=core.windows.net"
