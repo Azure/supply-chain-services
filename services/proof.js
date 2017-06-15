@@ -47,10 +47,10 @@ function callGetProof(trackingId, decrypt, proofs, next){
             }
             if (decrypt == "true") {
                 key.decrypt(userId, trackingId, result[1], function(decrypted) {
-                    // ensure we always return a valid jason, even if we get back a string
-                    var decrypedJson = { raw_content : decrypted};
+                    // ensure we always return a valid json, even if we get back a string
+                    var decryptedJson = { raw_content : decrypted};
                     try {
-                        decrypedJson = JSON.parse(decrypted);
+                        decrypedtJson = JSON.parse(decrypted);
                     }
                     catch(ex){
                         
