@@ -52,8 +52,6 @@ var entGen = azure.TableUtilities.entityGenerator;
 
 module.exports = {
     getPublicKey: function (userId, keyId, next) {
-        userId = encodeURIComponent(userId);
-        keyId = encodeURIComponent(keyId);
         ReadEntity(keyTableName, userId, keyId).then(function (res) {
             next({
                 key_id: res.RowKey._,
@@ -63,8 +61,6 @@ module.exports = {
         function (err) { next(null); });
     },
     createKey: function(userId, keyId, next) {
-        userId = encodeURIComponent(userId);
-        keyId = encodeURIComponent(keyId);
         let key = generateNewKey();
         var entity = {
             PartitionKey: entGen.String(userId),
@@ -97,11 +93,15 @@ module.exports = {
     },
     decrypt: function(userId, keyId, content, next){
         var rsa = new nodeRSA(); 
-        userId = encodeURIComponent(userId);
-        keyId = encodeURIComponent(keyId);
         ReadEntity(keyTableName, userId, keyId).then(function (res) {
             rsa.importKey(res.PrivateKey._, 'pkcs1-private-pem');
-            next(rsa.decrypt(content, 'UTF8'));
+            try {
+                var decyrptedContent = rsa.decrypt(content, 'UTF8');
+                next(decyrptedContent);
+            }
+            catch(ex){
+                next(content);
+            }
         },
         function (err) { next(content); });
     }
