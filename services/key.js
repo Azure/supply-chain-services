@@ -95,7 +95,13 @@ module.exports = {
         var rsa = new nodeRSA(); 
         ReadEntity(keyTableName, userId, keyId).then(function (res) {
             rsa.importKey(res.PrivateKey._, 'pkcs1-private-pem');
-            next(rsa.decrypt(content, 'UTF8'));
+            try {
+                var decyrptedContent = rsa.decrypt(content, 'UTF8');
+                next(decyrptedContent);
+            }
+            catch(ex){
+                next(content);
+            }
         },
         function (err) { next(content); });
     }

@@ -47,7 +47,15 @@ function callGetProof(trackingId, decrypt, proofs, next){
             }
             if (decrypt == "true") {
                 key.decrypt(userId, trackingId, result[1], function(decrypted) {
-                    pushProof(decrypted.length==0 ? {} : JSON.parse(decrypted));     
+                    // ensure we always return a valid jason, even if we get back a string
+                    var decrypedJson = { raw_content : decrypted};
+                    try {
+                        decrypedJson = JSON.parse(decrypted);
+                    }
+                    catch(ex){
+                        
+                    };
+                    pushProof(decrypedJson);     
                 }); 
             }
             else {

@@ -47,7 +47,7 @@ module.exports = {
                     res.send(result);
                 }
                 else {
-                    next(new restify.ResourceNotFoundError("No resource with tracking_id " + req.query.tracking_id));
+                    next(new restify.ResourceNotFoundError("No resource found"));
                 }
                 next();
             });
