@@ -3,7 +3,7 @@
 ## update smart contracts
 
 Open the ibera-smart-contracts project and update your contract
-run `truffle deploy`
+run `truffle deploy` 
 open the built contract in the `build` folder and copy the abi portion into the clipboard
 copy it into http://www.textfixer.com/tools/remove-line-breaks.php to remove the line breaks
 then set the new string as the value for your abi:
@@ -11,14 +11,21 @@ then set the new string as the value for your abi:
 const proofAbi = [ { "constant": ... }];
 ```
 run `truffle migrate --reset` to deploy and migrate the contract
-copy the address of the deployed contract and set this as the `contractAddress` : 
+copy the address of the deployed contract and set this as an environment variable `deployed_contract_address` either in your local `config.json` or as an AppSetting in the WebApp environment: 
 ```
-const contractAddress = '0xa6608368fdc4d4db4e802583c16f6f0baa338ef9';
+deployed_contract_address : "0xa6608368fdc4d4db4e802583c16f6f0baa338ef9";
 ```
 
 you then can create an instance of the contract by using the abi and the address:
 ```
+const contractAddress = nconf.get('deployed_contract_address');
 var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
+```
+## Specify the Ethereum address
+In addition to deploying the contract, you also need to create an Ethereum account and link this to the service through the environment setting called `account_address` such as here in the local `config.json`:
+
+```
+   "account_address" : "0x79178125ba23619951847a7149c6e0e0f1804baf"
 ```
 
 # Proof API calls
