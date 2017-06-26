@@ -17,15 +17,15 @@ function WriteEntity(tableName, entity) {
             if (!error) {
                 tableSvc.insertEntity(tableName, entity, function (error, result, response) {
                     if (!error) {
-                        fulfill(entity.PublicKey._);
+                        return fulfill(entity.PublicKey._);
                     }
                     else {
-                        reject(error);
+                        return reject(error);
                     }
                 });
             }
             else {
-                console.error(error);
+               return reject(error);
             }
         });
     });
@@ -35,10 +35,10 @@ function ReadEntity(tableName, partitionKey, rowKey) {
     return new Promise(function (fulfill, reject) {
         tableSvc.retrieveEntity(tableName, partitionKey, rowKey, function (error, result, response) {
             if (!error) {
-                fulfill(result);
+                return fulfill(result);
             }
             else {
-                reject(error);
+                return reject(error);
             }
         });
     });
@@ -53,7 +53,7 @@ var entGen = azure.TableUtilities.entityGenerator;
 module.exports = {
     getPublicKey: function (userId, keyId, next) {
         ReadEntity(keyTableName, userId, keyId).then(function (res) {
-            next({
+            return next({
                 key_id: res.RowKey._,
                 public_key: res.PublicKey._
             });
@@ -69,8 +69,8 @@ module.exports = {
             PrivateKey: entGen.String(key.exportKey('pkcs1-private-pem')),
         };
         WriteEntity(keyTableName, entity).then(
-            function (res) { next(res); },
-            function (err) { next(err); }
+            function (res) { return next(res); },
+            function (err) { return next(err); }
         );
 
     },
@@ -78,11 +78,11 @@ module.exports = {
         module.exports.getPublicKey(userId, keyId, function(result){
             if (!result || !result.key_id){
                 module.exports.createKey(userId, keyId, function(result){
-                    next(result)
+                    return next(result)
                 });
             }
             else {
-                next(result.public_key)
+                return next(result.public_key)
             }
         });
     },
@@ -97,12 +97,12 @@ module.exports = {
             rsa.importKey(res.PrivateKey._, 'pkcs1-private-pem');
             try {
                 var decyrptedContent = rsa.decrypt(content, 'UTF8');
-                next(decyrptedContent);
+                return next(decyrptedContent);
             }
             catch(ex){
-                next(content);
+                return next(content);
             }
         },
-        function (err) { next(content); });
+        function (err) { return next(content); });
     }
 }

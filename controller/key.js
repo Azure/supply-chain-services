@@ -25,15 +25,15 @@ module.exports = {
             proof.getPublicKey(userId, req.query.key_id, function (result) {
                 if (result != null) {
                     res.send(result);
+                    return next();
                 }
                 else {
-                    next(new restify.ResourceNotFoundError("No resource with key_id " + req.query.key_id));
+                    return next(new restify.ResourceNotFoundError("No resource with key_id " + req.query.key_id));
                 }
-                next();
             });
         }
         else {
-            next(new restify.ResourceNotFoundError("query format is ?key_id=xyz"));
+            return next(new restify.ResourceNotFoundError("query format is ?key_id=xyz"));
         }
     },
     post: function (req, res, next) {
@@ -42,11 +42,11 @@ module.exports = {
             req.body.key_id = encodeURIComponent(req.body.key_id);
             proof.createKey(userId, req.body.key_id, function(result){
                 res.send(result);
-                next();
+                return next();
             });
         }
         else {
-            error(new restify.InvalidArgumentError("invalid schema - correct schema is " + JSON.stringify(keyPostSchema)));
+            return error(new restify.InvalidArgumentError("invalid schema - correct schema is " + JSON.stringify(keyPostSchema)));
         }
     }
 }

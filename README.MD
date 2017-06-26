@@ -13,7 +13,7 @@ const proofAbi = [ { "constant": ... }];
 run `truffle migrate --reset` to deploy and migrate the contract
 copy the address of the deployed contract and set this as an environment variable `deployed_contract_address` either in your local `config.json` or as an AppSetting in the WebApp environment: 
 ```
-deployed_contract_address : "0xa6608368fdc4d4db4e802583c16f6f0baa338ef9";
+"deployed_contract_address" : "0xa6608368fdc4d4db4e802583c16f6f0baa338ef9";
 ```
 
 you then can create an instance of the contract by using the abi and the address:

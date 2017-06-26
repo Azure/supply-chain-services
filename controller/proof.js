@@ -45,15 +45,15 @@ module.exports = {
             proof.getProof(req.query.tracking_id, req.query.decrypt, function (result) {
                 if (result != null) {
                     res.send(result);
+                    return next();
                 }
                 else {
-                    next(new restify.ResourceNotFoundError("No resource found"));
+                    return next(new restify.ResourceNotFoundError("No resource found"));
                 }
-                next();
             });
         }
         else {
-            next(new restify.ResourceNotFoundError("query format is ?tracking_id=xyz&decrypt=true"));
+            return next(new restify.ResourceNotFoundError("query format is ?tracking_id=xyz&decrypt=true"));
         }
     },
     post: function (req, res, next) {
@@ -61,11 +61,11 @@ module.exports = {
             req.body.tracking_id = encodeURIComponent(req.body.tracking_id);
             proof.startTracking(req.body, function(result){
                 res.send(result);
-                next();
+                return next();
             });
         }
         else {
-            next(new restify.InvalidArgumentError("invalid schema - correct schema is " + JSON.stringify(proofPostSchema)));
+            return next(new restify.InvalidArgumentError("invalid schema - correct schema is " + JSON.stringify(proofPostSchema)));
         }
     },
     put: function (req, res, next) {
@@ -74,7 +74,7 @@ module.exports = {
             req.body.previous_tracking_id = encodeURIComponent(req.body.previous_tracking_id);
             proof.storeProof(req.body, function (result) {
                 res.send(result);
-                next();
+                return next();
             });
         }
         else {
@@ -86,11 +86,11 @@ module.exports = {
         if (validate(req.body, proofPatchSchema).valid) {
             proof.transfer(req.body, function (result) {
                 res.send(result);
-                next();
+                return next();
             });
         }
         else {
-            next(new restify.InvalidArgumentError("invalid schema - correct schema is " + JSON.stringify(proofPatchSchema)));
+            return next(new restify.InvalidArgumentError("invalid schema - correct schema is " + JSON.stringify(proofPatchSchema)));
         }
     }
 }

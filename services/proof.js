@@ -38,11 +38,11 @@ function callGetProof(trackingId, decrypt, proofs, next){
                         callGetProof(previousTrackingId, decrypt, proofs, next)
                     }
                     else {
-                        next(proofs);
+                        return next(proofs);
                     }
                 }
                 else {
-                    next(null);
+                    return next(null);
                 }
             }
             if (decrypt == "true") {
@@ -63,7 +63,7 @@ function callGetProof(trackingId, decrypt, proofs, next){
             }
         }
         else {
-            next(null);
+            return next(null);
         }
     });
 }
@@ -77,7 +77,7 @@ function createProof(proof, next){
             public_proof : proof.public_proof
         });
         proof.encrypted_proof = key.encrypt(keyValue, proofToEncryptStr);
-        next(proof);
+        return next(proof);
     });
 }
 module.exports = {
@@ -89,10 +89,10 @@ module.exports = {
          createProof(proof, function(proof) {
             contractInstance.startTracking(proof.tracking_id, proof.encrypted_proof, proof.public_proof, {from: account, gas : 2000000}, function(error, result){
                 if (!error) {
-                    next(JSON.stringify(result));
+                    return next(JSON.stringify(result));
                 }
                 else {
-                    next(error);
+                    return next(error);
                 }
             });
         });
@@ -101,10 +101,10 @@ module.exports = {
         createProof(proof, function(proof) {
             contractInstance.storeProof(proof.tracking_id, proof.previous_tracking_id, proof.encrypted_proof, proof.public_proof, {from: account, gas : 2000000}, function(error, result){
                 if (!error) {
-                    next(result);
+                    return next(result);
                 }
                 else {
-                    next(error);
+                    return next(error);
                 }
             });
         });
@@ -112,10 +112,10 @@ module.exports = {
     transfer: function(transfer, next) {
         contractInstance.transfer(transfer.tracking_id, transfer.transfer_to, {from: account, gas : 2000000}, function(error, result){
             if (!error) {
-                next(result);
+                return next(result);
             }
             else {
-                next(error);
+                return next(error);
             }
         });
     }
