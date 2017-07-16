@@ -1,7 +1,9 @@
 'use strict';
 var nconf = require('nconf'),
     azure = require('azure-storage'),
-    nodeRSA = require('node-rsa');
+    nodeRSA = require('node-rsa'),
+    promisify = require("promisify-node");
+
 
 nconf.argv()
    .env()
@@ -10,6 +12,8 @@ nconf.argv()
 const storageConnectionString = nconf.get('AZURE_STORAGE_CONNECTION_STRING');
 const tableSvc = azure.createTableService(storageConnectionString);
 const keyTableName = 'Keys';
+
+var tableSvcP = promisify(tableSvc);
 
 function WriteEntity(tableName, entity) {
     return new Promise(function (fulfill, reject) {
@@ -43,6 +47,7 @@ function ReadEntity(tableName, partitionKey, rowKey) {
         });
     });
 }
+
 
 function generateNewKey(){
    return new nodeRSA({b: 512}); 
@@ -91,18 +96,19 @@ module.exports = {
         rsa.importKey(publicKey, 'pkcs1-public-pem');
         return rsa.encrypt(content, 'base64', 'UTF8');
     },
-    decrypt: function(userId, keyId, content, next){
+    decrypt: async function(userId, keyId, content) {
         var rsa = new nodeRSA(); 
-        ReadEntity(keyTableName, userId, keyId).then(function (res) {
-            rsa.importKey(res.PrivateKey._, 'pkcs1-private-pem');
-            try {
-                var decyrptedContent = rsa.decrypt(content, 'UTF8');
-                return next(decyrptedContent);
-            }
-            catch(ex){
-                return next(content);
-            }
-        },
-        function (err) { return next(content); });
+
+        var res = await ReadEntity(keyTableName, userId, keyId);
+    
+        rsa.importKey(res.PrivateKey._, 'pkcs1-private-pem');
+        try {
+            var decyrptedContent = rsa.decrypt(content, 'UTF8');
+            return decyrptedContent;
+        }
+        catch(ex){
+          console.error(`error: ${err.message}`);
+        }
+        return content;
     }
 }

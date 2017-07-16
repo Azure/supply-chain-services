@@ -16,6 +16,7 @@
     "jsonschema": "^1.1.1",
     "nconf": "^0.8.4",
     "node-rsa": "^0.4.2",
+    "promisify-node": "^0.4.0",
     "restify": "^4.3.0",
     "restify-validator": "^0.3.1",
     "sha256": "^0.2.0",

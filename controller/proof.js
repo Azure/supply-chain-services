@@ -2,7 +2,9 @@
 
 var proof = require(`../services/proof.js`),
     restify = require('restify'),
-    validate = require('jsonschema').validate;
+    validate = require('jsonschema').validate,
+    util = require('util');
+
 validate.throwError = true;
 
 var proofPostSchema = {
@@ -37,25 +39,35 @@ var proofPatchSchema = {
 };
 
 module.exports = {
-    get: function (req, res, next) {
-        req.assert('tracking_id', 'Invalid tracking_id').notEmpty();
-        req.assert('decrypt', 'Invalid decrypt value - needs to be a Boolean').notEmpty();
-        if (!req.validationErrors()) {
-            req.query.tracking_id = encodeURIComponent(req.query.tracking_id);
-            proof.getProof(req.query.tracking_id, req.query.decrypt, function (result) {
-                if (result != null) {
-                    res.send(result);
-                    return next();
-                }
-                else {
-                    return next(new restify.ResourceNotFoundError("No resource found"));
-                }
-            });
-        }
-        else {
-            return next(new restify.ResourceNotFoundError("query format is ?tracking_id=xyz&decrypt=true"));
-        }
+
+    get: async function (req, res, next) {
+      req.assert('tracking_id', 'Invalid tracking_id').notEmpty();
+
+      var errors = req.validationErrors();
+      if (errors)
+        return res.send(500 ,`There have been validation errors: ${util.inspect(errors)}`);
+  
+      var opts = { 
+        trackingId: encodeURIComponent(req.query.tracking_id), 
+        decrypt: req.sanitize('decrypt').toBoolean()
+      };
+
+      console.log(`getting proof for ${JSON.stringify(opts, true, 2)}`);
+
+      try {
+        var result = await proof.getProof(opts);
+      }
+      catch(err) {
+        return next(new restify.InternalServerError(err.message));
+      }
+
+      if (!result)
+        return next(new restify.ResourceNotFoundError(`tracking id '${opts.trackingId}' not found`));
+     
+      console.log(`sending result: ${JSON.stringify(result, true, 2)}`);
+        return res.json(result);
     },
+
     post: function (req, res, next) {
         if (validate(req.body, proofPostSchema).valid) {
             req.body.tracking_id = encodeURIComponent(req.body.tracking_id);

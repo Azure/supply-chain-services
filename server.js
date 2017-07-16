@@ -6,24 +6,17 @@ var restify = require('restify'),
     proof = require(`./controller/proof.js`),
     key = require(`./controller/key.js`);
 
-
 var development = process.env.NODE_ENV !== 'production';
-var port = process.env.port || process.env.PORT || 443;
-var server = null;
+var port = process.env.PORT || 443;
+
+var opts = {};
 
 if (development) {
-    server = restify.createServer({
-        certificate: fs.readFileSync('server.crt'),
-        key: fs.readFileSync('server.key'),
-        port: port, 
-        name: 'iBera-services'
-    });
+  opts.certificate = fs.readFileSync('server.crt');
+  opts.key = fs.readFileSync('server.key');
 }
-else {
-    server = restify.createServer({
-        name: 'iBera-services'
-    });   
-}
+
+var server = restify.createServer(opts);
 
 server.use(restify.CORS());
 server.use(restify.queryParser());
@@ -37,6 +30,9 @@ server.patch('/api/proof', proof.patch);
 server.post('/api/key', key.post);
 server.get('/api/key', key.get);
 
-server.listen(port, function () {
-    console.log('%s listening at %s', server.name, server.url);
+server.listen(port, err => {
+  if (err) 
+    return console.error(`error running server: ${err.message}`);
+
+  return console.log(`server is listening at ${server.url}`);
 });
