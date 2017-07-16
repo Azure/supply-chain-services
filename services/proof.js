@@ -52,114 +52,49 @@ async function callGetProof(opts) {
     
     var trackingId = opts.trackingId;
     var decrypt = opts.decrypt;
-    var proofs = opts.proofs;
+    var proofs = [];
 
-    try {
+    while (trackingId && trackingId != "root") {
+
       var result = await contract.getProof(trackingId);
-    }
-    catch(err) {
-      console.error(`error getting result from blockchain for trackingId: ${trackingId}`);
-      throw err;
-    }
+      
+      var proof;
 
-    var proof;
+      if (!decrypt) 
+        proof = result[1];
+      else
+      {
+        var decrypted = await key.decrypt(userId, trackingId, result[1]);
 
-    if (decrypt) {
+        // ensure we always return a valid json, even if we get back a string
+        var decryptedJson = { raw_content : decrypted};
+
         try {
-          var decrypted = await key.decrypt(userId, trackingId, result[1]);
-          // ensure we always return a valid json, even if we get back a string
-          var decryptedJson = { raw_content : decrypted};
           decryptedJson = JSON.parse(decrypted);
         }
-        catch(ex){
-          throw ex;
+        catch(ex) {
+          console.warn(`invalid decrypted json: ${decrypted}`);
         };
+
         proof = decryptedJson;     
       }
-      else {
-          proof = result[1];
-      }
 
-      var encryptedProofJson = proof;
       // check if we got a valid proof
       if (result[3].length > 0)
       {
-          proofs.push({
-              "tracking_id" : trackingId,
-              "owner" : result[0],
-              "encrypted_proof" : encryptedProofJson,
-              "public_proof" : result[2].length > 0 ? JSON.parse(result[2]) : result[2],
-              "previous_tracking_id" : result[3]
-          });
-          var previousTrackingId =  result[3];
-          if (previousTrackingId && previousTrackingId != "root") {
-//                        await callGetProof({trackingId: previousTrackingId, decrypt, proofs }, next)
-          }
-          else {
-              return proofs;
-          }
+        proofs.push({
+            "tracking_id" : trackingId,
+            "owner" : result[0],
+            "encrypted_proof" : proof,
+            "public_proof" : result[2].length > 0 ? JSON.parse(result[2]) : result[2],
+            "previous_tracking_id" : result[3]
+        });
+
+        trackingId = result[3];
       }
-      else {
-          return;
-      }
-}
-
-
-function callGetProof_(opts, cb) {
-
-    console.log(`[services/proof.js:callGetProof] opts: ${JSON.stringify(opts, true, 2)}`);
-
-    var trackingId = opts.trackingId;
-    var decrypt = opts.decrypt;
-    var proofs = opts.proofs;
-
-    contractInstance.getProof.call(trackingId , function(error, result){
-        if (!error) {
-            let pushProof = function(encryptedProofStr){
-                var encryptedProofJson = encryptedProofStr;
-                // check if we got a valid proof
-                if (result[3].length > 0)
-                {
-                    proofs.push({
-                        "tracking_id" : trackingId,
-                        "owner" : result[0],
-                        "encrypted_proof" : encryptedProofJson,
-                        "public_proof" : result[2].length > 0 ? JSON.parse(result[2]) : result[2],
-                        "previous_tracking_id" : result[3]
-                    });
-                    var previousTrackingId =  result[3];
-                    if ((previousTrackingId != "root" ) && (previousTrackingId != "")) {
-                        callGetProof({trackingId: previousTrackingId, decrypt, proofs }, next)
-                    }
-                    else {
-                        return cb(null, proofs);
-                    }
-                }
-                else {
-                    return cb();
-                }
-            }
-            if (decrypt == "true") {
-                key.decrypt(userId, trackingId, result[1], function(decrypted) {
-                    // ensure we always return a valid json, even if we get back a string
-                    var decryptedJson = { raw_content : decrypted};
-                    try {
-                        decryptedJson = JSON.parse(decrypted);
-                    }
-                    catch(ex){
-                        
-                    };
-                    pushProof(decryptedJson);     
-                }); 
-            }
-            else {
-                pushProof(result[1]);
-            }
-        }
-        else {
-            return cb();
-        }
-    });
+    }
+    
+    return proofs;
 }
 
 
@@ -179,14 +114,7 @@ function createProof(proof, next){
     });
 }
 module.exports = {
-    getProof: function(opts) {
-      opts.proofs = [];
-      return callGetProof(opts);
-    },
-    getProof_: async function (opts, cb) {
-        opts.proofs = [];
-        return await callGetProof(opts, cb);
-    },
+    getProof: callGetProof,
     startTracking: function(proof, next) {
         console.log(`[services/proof.js:startTracking] proof: ${proof}`);
 

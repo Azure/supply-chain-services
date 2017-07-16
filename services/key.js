@@ -96,6 +96,7 @@ module.exports = {
         rsa.importKey(publicKey, 'pkcs1-public-pem');
         return rsa.encrypt(content, 'base64', 'UTF8');
     },
+
     decrypt: async function(userId, keyId, content) {
         var rsa = new nodeRSA(); 
 
@@ -103,11 +104,12 @@ module.exports = {
     
         rsa.importKey(res.PrivateKey._, 'pkcs1-private-pem');
         try {
-            var decyrptedContent = rsa.decrypt(content, 'UTF8');
-            return decyrptedContent;
+          var decyrptedContent = rsa.decrypt(content, 'UTF8');
+          return decyrptedContent;
         }
-        catch(ex){
+        catch(err) {
           console.error(`error: ${err.message}`);
+          // TODO: check with Beat- do we want to throw here or should we return the content not decrypted?
         }
         return content;
     }

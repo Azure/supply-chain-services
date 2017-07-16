@@ -30,8 +30,13 @@ var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 module.exports = {
   getProof: function(trackingId) {
     return new Promise((resolve, reject) => {
+      console.log(`getting proof for tracking Id ${trackingId}`);
       return contractInstance.getProof.call(trackingId, (err, result) => {
-        if (err) return reject(err);
+        if (err) {
+          console.error(`error getting proof for tracking Id ${trackingId}`);
+          return reject(err);
+        }
+        console.log(`got proof for tracking Id ${trackingId}`);
         return resolve(result);
       });
     });
