@@ -5,13 +5,10 @@ var util = require('util');
 
 var key = require('./key');
 var contract = require('./contract');
-var nconf = require('../config');
-
+var config = require('../config');
 
 // TODO move userId to options object in each API
 const userId = "un-authenticated";
-
-const account = nconf.get('account_address');
 
 async function getProof(opts) {
     console.log(`[services/proof:getProof] opts: ${util.inspect(opts)}`);
@@ -70,7 +67,7 @@ async function startTracking(opts) {
   if (!opts.public_proof) throw new Error(`missing argument 'public_proof'`);
 
   var proof = await createProof(opts);
-  var result = await contract.startTracking(opts.tracking_id, opts.encrypted_proof, opts.public_proof, {from: account, gas : 2000000});
+  var result = await contract.startTracking(opts.tracking_id, opts.encrypted_proof, opts.public_proof, { from: config.ACCOUNT_ADDRESS, gas : config.GAS });
 
   console.log(`returning startTracking result: ${util.inspect(result)}`);
   return { result };
@@ -97,17 +94,17 @@ async function createProof(opts) {
 // TODO: Test below functions
 async function storeProof(opts) {
 
-  // add input validation as implemented in above functions
+  // TODO: add input validation as implemented in above functions
 
   var proof = await createProof(opts);
-  var result = await contract.storeProof(proof.tracking_id, proof.previous_tracking_id, proof.encrypted_proof, proof.public_proof, {from: account, gas : 2000000});
+  var result = await contract.storeProof(proof.tracking_id, proof.previous_tracking_id, proof.encrypted_proof, proof.public_proof,  { from: config.ACCOUNT_ADDRESS, gas : config.GAS });
   return { result };  
 }
 
 async function transfer(opts) {
-  // add input validation as implemented in above functions
+  // TODO: add input validation as implemented in above functions
 
-  var result = await contract.transfer(transfer.tracking_id, transfer.transfer_to, {from: account, gas : 2000000});
+  var result = await contract.transfer(transfer.tracking_id, transfer.transfer_to, { from: config.ACCOUNT_ADDRESS, gas : config.GAS });
   return { result };  
 }
 

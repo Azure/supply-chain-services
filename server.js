@@ -17,8 +17,8 @@ var server = express();
 var serverOptions = {};
 
 if (development) {
-  serverOptions.cert = fs.readFileSync('server.crt');
-  serverOptions.key = fs.readFileSync('server.key');
+  serverOptions.cert = fs.readFileSync('./cert/server.crt');
+  serverOptions.key = fs.readFileSync('./cert/server.key');
 }
 
 // Ask Beat if we need cors... not sure if we do

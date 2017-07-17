@@ -2,10 +2,9 @@
 
 var azure = require('azure-storage');
 var nodeRSA = require('node-rsa');
-var nconf = require('../config');
+var config = require('../config');
 
-const storageConnectionString = nconf.get('AZURE_STORAGE_CONNECTION_STRING');
-const tableSvc = azure.createTableService(storageConnectionString);
+const tableSvc = azure.createTableService(config.AZURE_STORAGE_CONNECTION_STRING);
 const keyTableName = 'Keys';
 
 function writeEntity(tableName, entity) {

@@ -4,7 +4,7 @@ var util = require('util');
 var express = require('express');
 var HttpStatus = require('http-status-codes');
 var validate = require('jsonschema').validate;
-var scehma = require('./schema.json');
+var scehma = require('./schema');
 var proof = require('../services/proof');
 
 var app = express();
