@@ -1,11 +1,9 @@
 'use strict';
+
 var nconf = require('nconf');
 var Web3 = require('web3');
 var web3 = new Web3();
-var sha256 = require('sha256');
-var key = require('./key');
 var util = require('util');
-var promisify = require("promisify-node");
 
 nconf.argv()
    .env()
@@ -20,46 +18,41 @@ const proofAbi = [ { "constant": true, "inputs": [ { "name": "trackingId", "type
 web3.setProvider(new Web3.providers.HttpProvider(gethRpcEndpoint));
 var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 
-/*
-[].forEach(fname => {
 
-  exports[fname] = function
+// wrap following functions with a promise so that we can use it with the async convention
+// and add it on the module.exports object
+[ 
+  'getProof',
+  'startTracking',
+  'storeProof',
+  'transfer'
+]
+  .forEach(fname => {
+
+    (function(fname) {
+      exports[fname] = function() {
+        return new Promise((resolve, reject) => {
+          console.log(`executing function '${fname}' on contract with params ${util.inspect(arguments)}`);
+
+          // callback for the function invoked
+          var cb = (err, result) => {
+            if (err) {
+              console.error(`error executing function '${fname}' on contract with params: ${util.inspect(arguments)}: ${err.message}`);
+              return reject(err);
+            }
+            console.log(`function '${fname}' on contract completed successfully. result: ${util.inspect(result)}`);
+            return resolve(result);
+          };
+
+          // extract original params and add the callback to the list
+          var params = Array.prototype.slice.call(arguments);
+          params.push(cb);
+
+          // invoke requested method on the contract
+          return contractInstance[fname].apply(contractInstance, params);
+        });
+      }
+    })(fname);
 
 });
-*/
 
-
-function getProof(trackingId) {
-  return new Promise((resolve, reject) => {
-    console.log(`getting proof for tracking Id ${trackingId}`);
-    return contractInstance.getProof.call(trackingId, (err, result) => {
-      if (err) {
-        console.error(`error getting proof for tracking Id ${trackingId}: ${err.message}`);
-        return reject(err);
-      }
-      console.log(`got proof for tracking Id ${trackingId}: ${util.inspect(result)}`);
-      return resolve(result);
-    });
-  });
-}
-
-function startTracking(trackingId, encryptedProof, publicProof, opts) {
-  return new Promise((resolve, reject) => {
-    console.log(`getting proof for tracking Id ${trackingId}`);
-    
-    return contractInstance.startTracking(trackingId, encryptedProof, publicProof, opts, (err, result) => {
-      if (err) {
-        console.error(`error start tracking ${util.inspect(arguments)}: ${err.message}`);
-        return reject(err);
-      }
-      console.log(`start tracking success for ${util.inspect(arguments)}: ${util.inspect(result)}`);
-      return resolve(result);
-    });
-    
-  });
-}
-
-module.exports = {
-  getProof,
-  startTracking
-}
