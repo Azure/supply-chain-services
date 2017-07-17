@@ -1,0 +1,7 @@
+{
+   "deployed_contract_address": "0xb03d211460d9376862d488e0988e0c9da8d48214",
+   "account_address" : "0xfcfe4d8a6df673465d9532befd917a6ed701c910",
+   "geth_rpc_endpoint" : "http://localhost:8545",
+   "geth_rpc_private_endpoint" : "http://10.0.0.4:8545",
+   "AZURE_STORAGE_CONNECTION_STRING" : "DefaultEndpointsProtocol=https;AccountName=somename;AccountKey=yourAccountKey;EndpointSuffix=core.windows.net"
+}

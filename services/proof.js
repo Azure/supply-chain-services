@@ -1,19 +1,17 @@
 'use strict';
 
-var nconf = require('nconf');
 var sha256 = require('sha256');
 var util = require('util');
 
 var key = require('./key');
 var contract = require('./contract');
+var nconf = require('../config');
 
-nconf.argv()
-   .env()
-   .file({ file: 'config.json' });
 
 // TODO move userId to options object in each API
 const userId = "un-authenticated";
 
+const account = nconf.get('account_address');
 
 async function getProof(opts) {
     console.log(`[services/proof:getProof] opts: ${util.inspect(opts)}`);

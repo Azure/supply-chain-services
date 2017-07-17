@@ -1,13 +1,8 @@
 'use strict';
 
-var nconf = require('nconf');
 var azure = require('azure-storage');
 var nodeRSA = require('node-rsa');
-
-
-nconf.argv()
-   .env()
-   .file({ file: 'config.json' });
+var nconf = require('../config');
 
 const storageConnectionString = nconf.get('AZURE_STORAGE_CONNECTION_STRING');
 const tableSvc = azure.createTableService(storageConnectionString);
