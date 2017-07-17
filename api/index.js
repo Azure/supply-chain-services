@@ -6,6 +6,6 @@ var proof = require('./proof');
 var key = require('./key');
 
 app.use('/proof', proof);
-//app.use('/key', key);
+app.use('/key', key);
 
 module.exports = app;

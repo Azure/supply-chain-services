@@ -1,52 +1,65 @@
 'use strict';
 
-var proof = require(`../services/key.js`),
-    restify = require('restify'),
-    validate = require('jsonschema').validate;
-validate.throwError = true;
-
-var keyPostSchema = {
-    "id": "/ProofPost",
-    "type": "object",
-    "properties": {
-        "key_id": { "type": "string" }
-    },
-    "required": ["key_id"]
-};
+var util = require('util');
+var express = require('express');
+var HttpStatus = require('http-status-codes');
+var validate = require('jsonschema').validate;
+var scehma = require('./schema.json');
+var key = require('../services/key');
 
 const userId = "un-authenticated";
 
-module.exports = {
-    get: function (req, res, next) {
-        req.assert('key_id', 'Invalid key_id').notEmpty();
-        if (!req.validationErrors()) {
-            userId = encodeURIComponent(userId);
-            req.query.key_id = encodeURIComponent(req.query.key_id);
-            proof.getPublicKey(userId, req.query.key_id, function (result) {
-                if (result != null) {
-                    res.send(result);
-                    return next();
-                }
-                else {
-                    return next(new restify.ResourceNotFoundError("No resource with key_id " + req.query.key_id));
-                }
-            });
-        }
-        else {
-            return next(new restify.ResourceNotFoundError("query format is ?key_id=xyz"));
-        }
-    },
-    post: function (req, res, next) {
-        if (validate(req.body, keyPostSchema).valid) {
-            userId = encodeURIComponent(userId);
-            req.body.key_id = encodeURIComponent(req.body.key_id);
-            proof.createKey(userId, req.body.key_id, function(result){
-                res.send(result);
-                return next();
-            });
-        }
-        else {
-            return error(new restify.InvalidArgumentError("invalid schema - correct schema is " + JSON.stringify(keyPostSchema)));
-        }
-    }
-}
+var app = express();
+
+// TODO: test below APIs
+
+// TODO: move key_id to params instead of query string
+
+app.get('/', async (req, res) => {
+
+  req.checkQuery('key_id', 'Invalid key_id').notEmpty();
+  var errors = await req.getValidationResult();
+  if (!errors.isEmpty()) {
+    return res.status(HttpStatus.BAD_REQUEST).json({ error: `there have been validation errors: ${util.inspect(errors.array())}` });
+  }
+
+  var userId = encodeURIComponent(userId);
+  req.query.key_id = encodeURIComponent(req.query.key_id);
+
+  try {
+    var result = await key.getPublicKey(userId, req.query.key_id);
+  }
+  catch(err) {
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err.message });
+  }
+
+  if (!result) {
+    return res.status(HttpStatus.NOT_FOUND).json({ error: `key id '${req.query.key_id}' not found` });
+  }
+
+  console.log(`sending result: ${util.inspect(result)}`);
+  return res.json(result);
+});
+
+app.post('/', async (req, res) => {
+
+  if (!validate(req.body, scehma.key.post).valid) {
+    return res.status(HttpStatus.BAD_REQUEST).json({ error: `invalid schema - expected schema is ${util.inspect(scehma.key.post)}` });
+  }
+
+  var userId = encodeURIComponent(userId);
+  req.body.key_id = encodeURIComponent(req.body.key_id);
+            
+  try {
+    var result = await key.createKey(userId, req.body.key_id);
+  }
+  catch(err) {
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err.message });
+  }
+
+  console.log(`sending result: ${util.inspect(result)}`);
+  return res.json({ result });
+});
+
+
+module.exports = app;
