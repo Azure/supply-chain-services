@@ -28,18 +28,38 @@ var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 });
 */
 
-module.exports = {
-  getProof: function(trackingId) {
-    return new Promise((resolve, reject) => {
-      console.log(`getting proof for tracking Id ${trackingId}`);
-      return contractInstance.getProof.call(trackingId, (err, result) => {
-        if (err) {
-          console.error(`error getting proof for tracking Id ${trackingId}: ${err.message}`);
-          return reject(err);
-        }
-        console.log(`got proof for tracking Id ${trackingId}: ${util.inspect(result)}`);
-        return resolve(result);
-      });
+
+function getProof(trackingId) {
+  return new Promise((resolve, reject) => {
+    console.log(`getting proof for tracking Id ${trackingId}`);
+    return contractInstance.getProof.call(trackingId, (err, result) => {
+      if (err) {
+        console.error(`error getting proof for tracking Id ${trackingId}: ${err.message}`);
+        return reject(err);
+      }
+      console.log(`got proof for tracking Id ${trackingId}: ${util.inspect(result)}`);
+      return resolve(result);
     });
-  }
+  });
+}
+
+function startTracking(trackingId, encryptedProof, publicProof, opts) {
+  return new Promise((resolve, reject) => {
+    console.log(`getting proof for tracking Id ${trackingId}`);
+    
+    return contractInstance.startTracking(trackingId, encryptedProof, publicProof, opts, (err, result) => {
+      if (err) {
+        console.error(`error start tracking ${util.inspect(arguments)}: ${err.message}`);
+        return reject(err);
+      }
+      console.log(`start tracking success for ${util.inspect(arguments)}: ${util.inspect(result)}`);
+      return resolve(result);
+    });
+    
+  });
+}
+
+module.exports = {
+  getProof,
+  startTracking
 }

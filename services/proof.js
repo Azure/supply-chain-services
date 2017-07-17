@@ -99,38 +99,40 @@ async function getProof(opts) {
     return proofs;
 }
 
+async function startTracking(opts) {
+  console.log(`[services/proof:startTracking] opts: ${util.inspect(opts)}`);
+    
+  if (!opts.tracking_id) throw new Error(`missing argument 'tracking_id'`);
+  if (!opts.public_proof) throw new Error(`missing argument 'public_proof'`);
 
-function createProof(proof, next){
- // console.log(`[services/proof.js:createProof] opts: ${JSON.stringify(opts, true, 2)}`);
-  console.log(`[services/proof.js:createProof] opts: ${proof}`);
+  var proof = await createProof(opts);
+  var result = await contract.startTracking(opts.tracking_id, opts.encrypted_proof, opts.public_proof, {from: account, gas : 2000000});
 
-    key.createKeyIfNotExist(userId, proof.tracking_id, function(keyValue){
-        var proofToEncryptStr = JSON.stringify(proof.proof_to_encrypt);
-        var hash = sha256(proofToEncryptStr);
-        proof.public_proof = JSON.stringify({
-            encrypted_proof_hash : hash.toUpperCase(),
-            public_proof : proof.public_proof
-        });
-        proof.encrypted_proof = key.encrypt(keyValue, proofToEncryptStr);
-        return next(proof);
-    });
+  console.log(`returning startTracking result: ${util.inspect(result)}`);
+  return result;
 }
+
+async function createProof(opts) {
+  console.log(`[services/proof:createProof] opts: ${util.inspect(opts)}`);
+     
+  if (!opts.tracking_id) throw new Error(`missing argument 'tracking_id'`);
+  if (!opts.proof_to_encrypt) throw new Error(`missing argument 'proof_to_encrypt'`);
+
+  var keyValue = await key.createKeyIfNotExist(userId, opts.tracking_id);
+
+  var proofToEncryptStr = JSON.stringify(opts.proof_to_encrypt);
+  var hash = sha256(proofToEncryptStr);
+  opts.public_proof = JSON.stringify({
+      encrypted_proof_hash : hash.toUpperCase(),
+      public_proof : opts.public_proof
+  });
+  opts.encrypted_proof = key.encrypt(keyValue, proofToEncryptStr);
+  return opts;
+}
+
 module.exports = {
     getProof,
-    startTracking: function(proof, next) {
-        console.log(`[services/proof.js:startTracking] proof: ${proof}`);
-
-         createProof(proof, function(proof) {
-            contractInstance.startTracking(proof.tracking_id, proof.encrypted_proof, proof.public_proof, {from: account, gas : 2000000}, function(error, result){
-                if (!error) {
-                    return next(JSON.stringify(result));
-                }
-                else {
-                    return next(error);
-                }
-            });
-        });
-    },
+    startTracking,
     storeProof: function(proof, next) {
         console.log(`[services/proof.js:storeProof] proof: ${proof}`);
 
