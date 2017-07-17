@@ -12,7 +12,13 @@
   },
   "dependencies": {
     "azure-storage": "^2.1.0",
+    "body-parser": "^1.17.2",
+    "express": "^4.15.3",
+    "express-cors": "0.0.3",
+    "express-qs-parser": "0.0.1",
+    "express-validator": "^3.2.1",
     "formidable": "^1.1.1",
+    "http-status-codes": "^1.1.6",
     "jsonschema": "^1.1.1",
     "nconf": "^0.8.4",
     "node-rsa": "^0.4.2",

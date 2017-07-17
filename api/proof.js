@@ -4,24 +4,24 @@ var proof = require('../services/proof');
 var restify = require('restify');
 var validate = require('jsonschema').validate;
 var util = require('util');
-
+var express = require('express');
+var HttpStatus = require('http-status-codes');
 var scehma = require('./schema.json');
 
-validate.throwError = true;
+var app = express();
 
-
-async function get(req, res, next) {
+app.get('/', async (req, res) => {
   console.log(`[controller/proof:get]`);
 
-  req.assert('tracking_id', 'Invalid tracking_id').notEmpty();
-  var errors = req.validationErrors();
-  if (errors) {
-    return next(new restify.InvalidArgumentError(`There have been validation errors: ${util.inspect(errors)}`));
+  req.checkQuery('tracking_id', 'Invalid tracking_id').notEmpty();
+  var errors = await req.getValidationResult();
+  if (!errors.isEmpty()) {
+    return res.status(HttpStatus.BAD_REQUEST).end(`There have been validation errors: ${util.inspect(errors.array())}`);
   }
 
   var opts = { 
     trackingId: encodeURIComponent(req.query.tracking_id), 
-    decrypt: req.sanitize('decrypt').toBoolean()
+    decrypt: req.sanitizeQuery('decrypt').toBoolean()
   };
 
   console.log(`getting proof for ${util.inspect(opts)}`);
@@ -30,22 +30,23 @@ async function get(req, res, next) {
     var result = await proof.getProof(opts);
   }
   catch(err) {
-    return next(new restify.InternalServerError(err.message));
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).end(err.message);
   }
 
   if (!result) {
-    return next(new restify.ResourceNotFoundError(`tracking id '${opts.trackingId}' not found`));
+    return res.status(HttpStatus.NOT_FOUND).end(`tracking id '${opts.trackingId}' not found`);
   }
 
   console.log(`sending result: ${util.inspect(result)}`);
   return res.json(result);
-}
+});
 
-async function post(req, res, next) {
+
+app.post('/', async (req, res) => {
   console.log(`[controller/proof:post] body: ${util.inspect(req.body)}`);
 
   if (!validate(req.body, scehma.proof.post).valid) {
-    return next(new restify.InvalidArgumentError(`invalid schema - correct schema is ${util.inspect(proofPostSchema)}`));
+    return res.status(HttpStatus.BAD_REQUEST).end(`invalid schema - correct schema is ${util.inspect(proofPostSchema)}`);
   }
 
   req.body.tracking_id = encodeURIComponent(req.body.tracking_id);
@@ -54,14 +55,17 @@ async function post(req, res, next) {
     var result = proof.startTracking(req.body);
   }
   catch(err) {
-    return next(new restify.InternalServerError(err.message));
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).end(err.message);
   }
 
   console.log(`sending result: ${util.inspect(result)}`);
   // TODO: check what should we return here.. this should be json probably...
   return res.send(result);
-}
+});
 
+module.exports = app;
+
+/*
 module.exports = {
   get,
   post,
@@ -91,3 +95,5 @@ module.exports = {
         }
     }
 }
+
+*/

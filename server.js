@@ -1,27 +1,40 @@
 'use strict';
 
-var restify = require('restify'),
-    restifyValidator  =  require('restify-validator'),
-    fs = require('fs'),
-    proof = require(`./controller/proof.js`),
-    key = require(`./controller/key.js`);
 
-var development = process.env.NODE_ENV !== 'production';
+
+var util = require('util');
+var http = require('http');
+var https = require('https');
+var fs = require('fs');
+var express = require('express');
+var bodyParser = require('body-parser');
+var cors = require('express-cors');
+var expressValidator = require('express-validator');
+
+var api = require('./api');
+
+var server = express();
 var port = process.env.PORT || 443;
 
-var opts = {};
+
+var development = process.env.NODE_ENV !== 'production';
+//var port = process.env.PORT || 443;
+
+var sslOptions = {};
 
 if (development) {
-  opts.certificate = fs.readFileSync('server.crt');
-  opts.key = fs.readFileSync('server.key');
+  sslOptions.cert = fs.readFileSync('server.crt');
+  sslOptions.key = fs.readFileSync('server.key');
 }
 
-var server = restify.createServer(opts);
+//var server = restify.createServer(opts);
 
-server.use(restify.CORS());
-server.use(restify.queryParser());
-server.use(restify.bodyParser());
-server.use(restifyValidator);
+//server.use(restify.CORS());
+//server.use(restify.queryParser());
+//server.use(restify.bodyParser());
+//server.use(restifyValidator);
+
+/*
 
 server.post('/api/proof', proof.post);
 server.put('/api/proof', proof.put);
@@ -29,10 +42,20 @@ server.get('/api/proof', proof.get);
 server.patch('/api/proof', proof.patch);
 server.post('/api/key', key.post);
 server.get('/api/key', key.get);
+*/
 
-server.listen(port, err => {
-  if (err) 
-    return console.error(`error running server: ${err.message}`);
+//server.use(cors());
+server.use(bodyParser.json());
+server.use(expressValidator());
 
-  return console.log(`server is listening at ${server.url}`);
+server.use((req, res, next) => {
+	console.log(`url: ${req.method} ${req.originalUrl} ${util.inspect(req.body || {})}`);
+	return next();
+});
+
+server.use('/api', api);
+
+https.createServer(sslOptions, server).listen(port, err => {
+	if (err) return console.error(err);
+	console.info(`server listening on port ${port}`);
 });
