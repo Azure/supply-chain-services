@@ -1,9 +1,9 @@
 'use strict';
 
-var proof = require(`../services/proof.js`),
-    restify = require('restify'),
-    validate = require('jsonschema').validate,
-    util = require('util');
+var proof = require('../services/proof');
+var restify = require('restify');
+var validate = require('jsonschema').validate;
+var util = require('util');
 
 validate.throwError = true;
 
@@ -41,18 +41,19 @@ var proofPatchSchema = {
 module.exports = {
 
     get: async function (req, res, next) {
-      req.assert('tracking_id', 'Invalid tracking_id').notEmpty();
 
+      req.assert('tracking_id', 'Invalid tracking_id').notEmpty();
       var errors = req.validationErrors();
-      if (errors)
-        return res.send(500 ,`There have been validation errors: ${util.inspect(errors)}`);
-  
+      if (errors) {
+        return next(new restify.InvalidArgumentError(`There have been validation errors: ${util.inspect(errors)}`));
+      }
+
       var opts = { 
         trackingId: encodeURIComponent(req.query.tracking_id), 
         decrypt: req.sanitize('decrypt').toBoolean()
       };
 
-      console.log(`getting proof for ${JSON.stringify(opts, true, 2)}`);
+      console.log(`getting proof for ${util.inspect(opts)}`);
 
       try {
         var result = await proof.getProof(opts);
@@ -61,11 +62,12 @@ module.exports = {
         return next(new restify.InternalServerError(err.message));
       }
 
-      if (!result)
+      if (!result) {
         return next(new restify.ResourceNotFoundError(`tracking id '${opts.trackingId}' not found`));
-     
-      console.log(`sending result: ${JSON.stringify(result, true, 2)}`);
-        return res.json(result);
+      }
+      
+      console.log(`sending result: ${util.inspect(result)}`);
+      return res.json(result);
     },
 
     post: function (req, res, next) {
@@ -77,7 +79,7 @@ module.exports = {
             });
         }
         else {
-            return next(new restify.InvalidArgumentError("invalid schema - correct schema is " + JSON.stringify(proofPostSchema)));
+            return next(new restify.InvalidArgumentError("invalid schema - correct schema is " + util.inspect(proofPostSchema)));
         }
     },
     put: function (req, res, next) {

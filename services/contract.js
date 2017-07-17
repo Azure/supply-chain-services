@@ -1,10 +1,11 @@
 'use strict';
-var nconf = require('nconf'),
-    Web3 = require('web3'),
-    web3 = new Web3(),
-    sha256 = require('sha256'),
-    key = require('./key.js'),
-    promisify = require("promisify-node");
+var nconf = require('nconf');
+var Web3 = require('web3');
+var web3 = new Web3();
+var sha256 = require('sha256');
+var key = require('./key');
+var util = require('util');
+var promisify = require("promisify-node");
 
 nconf.argv()
    .env()
@@ -33,10 +34,10 @@ module.exports = {
       console.log(`getting proof for tracking Id ${trackingId}`);
       return contractInstance.getProof.call(trackingId, (err, result) => {
         if (err) {
-          console.error(`error getting proof for tracking Id ${trackingId}`);
+          console.error(`error getting proof for tracking Id ${trackingId}: ${err.message}`);
           return reject(err);
         }
-        console.log(`got proof for tracking Id ${trackingId}`);
+        console.log(`got proof for tracking Id ${trackingId}: ${util.inspect(result)}`);
         return resolve(result);
       });
     });

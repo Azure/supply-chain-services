@@ -1,11 +1,13 @@
 'use strict';
-var nconf = require('nconf'),
-    Web3 = require('web3'),
-    web3 = new Web3(),
-    sha256 = require('sha256'),
-    key = require('./key.js'),
-    contract = require('./contract'),
-    promisify = require("promisify-node");
+var nconf = require('nconf');
+var Web3 = require('web3');
+var web3 = new Web3();
+var sha256 = require('sha256');
+var key = require('./key');
+var contract = require('./contract');
+var promisify = require("promisify-node");    
+var util = require('util');
+    
 
 
 
@@ -47,9 +49,11 @@ web3.setProvider(new Web3.providers.HttpProvider(gethRpcEndpoint));
 var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 
 
-async function callGetProof(opts) {
-    console.log(`[services/proof.js:callGetProof] opts: ${JSON.stringify(opts, true, 2)}`);
+async function getProof(opts) {
+    console.log(`[services/proof:getProof] opts: ${util.inspect(opts)}`);
     
+    if (!opts.trackingId) throw new Error(`missing argument 'trackingId'`);
+
     var trackingId = opts.trackingId;
     var decrypt = opts.decrypt;
     var proofs = [];
@@ -57,7 +61,6 @@ async function callGetProof(opts) {
     while (trackingId && trackingId != "root") {
 
       var result = await contract.getProof(trackingId);
-      
       var proof;
 
       if (!decrypt) 
@@ -80,14 +83,13 @@ async function callGetProof(opts) {
       }
 
       // check if we got a valid proof
-      if (result[3].length > 0)
-      {
+      if (result[3].length > 0) {
         proofs.push({
-            "tracking_id" : trackingId,
-            "owner" : result[0],
-            "encrypted_proof" : proof,
-            "public_proof" : result[2].length > 0 ? JSON.parse(result[2]) : result[2],
-            "previous_tracking_id" : result[3]
+            tracking_id: trackingId,
+            owner: result[0],
+            encrypted_proof: proof,
+            public_proof: result[2].length > 0 ? JSON.parse(result[2]) : result[2],
+            previous_tracking_id: result[3]
         });
 
         trackingId = result[3];
@@ -114,7 +116,7 @@ function createProof(proof, next){
     });
 }
 module.exports = {
-    getProof: callGetProof,
+    getProof,
     startTracking: function(proof, next) {
         console.log(`[services/proof.js:startTracking] proof: ${proof}`);
 
