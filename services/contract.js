@@ -9,18 +9,38 @@ var config = require('../config');
 web3.setProvider(new Web3.providers.HttpProvider(config.GET_RPC_ENDPOINT));
 var contractInstance = web3.eth.contract(abi).at(config.CONTRACT_ADDRESS);
 
+var txHashOutstandingCalls = {};
+
 // wrap following functions with a promise so that we can use it with the async convention
 // and add it on the module.exports object
 // TODO: auto generate from abi
 [ 
   { name: 'getProof', method: 'call' },
-  { name: 'startTracking', method: 'sendTransaction' },
+  { name: 'startTracking', method: 'sendTransaction', event: 'TrackingStarted' },
   { name: 'storeProof', method: 'sendTransaction' },  
   { name: 'transfer', method: 'sendTransaction' }
 ]
   .forEach(func => {
 
-    (function(func) {
+    (func => {
+
+      if (func.event) {
+
+        // register to the function event listener
+        contractInstance[func.event]((err, result) => {
+          console.log(`event raised: ${func.event} with ${util.inspect(err)} and ${util.inspect(result)}`);
+          if (err) return console.error(`error in event listener '${func.event}': ${err.message}`);
+          console.log(`got event result: ${util.inspect(result)}`);
+          var cb = txHashOutstandingCalls[result.transactionHash];
+          if (cb) {
+            console.log(`calling callback for tx hash: ${result.transactionHash}`);
+            delete txHashOutstandingCalls[result.transactionHash];
+            return cb(null, result.args);
+          }
+        });
+
+      }
+
       exports[func.name] = function() {
         return new Promise((resolve, reject) => {
           console.log(`executing function '${func.name}' with '${func.method}' call on contract with params ${util.inspect(arguments)}`);
@@ -34,12 +54,20 @@ var contractInstance = web3.eth.contract(abi).at(config.CONTRACT_ADDRESS);
             
             console.log(`function '${func.name}' on contract completed successfully`);
 
-            if (func.method === 'call')
+            if (func.method === 'call') {
               console.log(`result: ${result.toString()}`);
-            else
-             console.log(`tx hash: ${result}`);
-            
-            return resolve(result);
+              return resolve(result);
+            }
+            else {
+              console.log(`tx hash: ${result}`);
+              return txHashOutstandingCalls[result] = (result => {
+                return (err, res) => {
+                  console.log(`in tx hash callback: ${result}`);
+                  if (err) return reject(err);
+                  return resolve(res);
+                }
+              })(result);
+            }
           };
 
           // extract original params and add the callback to the list

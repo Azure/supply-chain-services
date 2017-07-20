@@ -183,5 +183,22 @@
       "inputs": [],
       "payable": false,
       "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "trackingId",
+          "type": "string"
+        }
+      ],
+      "name": "TrackingStarted",
+      "type": "event"
     }
   ]

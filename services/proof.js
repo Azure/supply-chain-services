@@ -70,7 +70,7 @@ async function startTracking(opts) {
   var result = await contract.startTracking(opts.tracking_id, opts.encrypted_proof, opts.public_proof, { from: config.ACCOUNT_ADDRESS, gas : config.GAS });
 
   console.log(`returning startTracking result: ${util.inspect(result)}`);
-  return { result };
+  return result;
 }
 
 async function createProof(opts) {
@@ -98,14 +98,14 @@ async function storeProof(opts) {
 
   var proof = await createProof(opts);
   var result = await contract.storeProof(proof.tracking_id, proof.previous_tracking_id, proof.encrypted_proof, proof.public_proof,  { from: config.ACCOUNT_ADDRESS, gas : config.GAS });
-  return { result };  
+  return result;  
 }
 
 async function transfer(opts) {
   // TODO: add input validation as implemented in above functions
 
   var result = await contract.transfer(transfer.tracking_id, transfer.transfer_to, { from: config.ACCOUNT_ADDRESS, gas : config.GAS });
-  return { result };  
+  return result;  
 }
 
 module.exports = {
