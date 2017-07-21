@@ -27,16 +27,16 @@ return object sample:
     previous_tracking_id: 'root' } ]
 
 */
-app.get('/', async (req, res) => {
+app.get('/:tracking_id', async (req, res) => {
 
-  req.checkQuery('tracking_id', 'Invalid tracking_id').notEmpty();
+  req.checkParams('tracking_id', 'Invalid tracking_id').notEmpty();
   var errors = await req.getValidationResult();
   if (!errors.isEmpty()) {
     return res.status(HttpStatus.BAD_REQUEST).json({ error: `there have been validation errors: ${util.inspect(errors.array())}` });
   }
 
   var opts = { 
-    trackingId: encodeURIComponent(req.query.tracking_id), 
+    trackingId: req.params.tracking_id, 
     decrypt: req.sanitizeQuery('decrypt').toBoolean()
   };
 
@@ -58,41 +58,10 @@ app.get('/', async (req, res) => {
 });
 
 
-
-/*
-return object example: 
-
-{ result: '0x53524328951d7a6d92677bed80c4aa9182f26246d12189d6026c72b9f387f9fd' }
-*/
-app.post('/', async (req, res) => {
-
-  if (!validate(req.body, scehma.proof.post).valid) {
-    return res.status(HttpStatus.BAD_REQUEST).json({ error: `invalid schema - expected schema is ${util.inspect(scehma.proof.post)}` });
-  }
-
-  req.body.tracking_id = encodeURIComponent(req.body.tracking_id);
-
-  try {
-    var result = await proof.startTracking(req.body);
-  }
-  catch(err) {
-    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err.message });
-  }
-
-  console.log(`sending result: ${util.inspect(result)}`);
-  return res.json(result);
-});
-
-
-// TODO: test below APIs
-
 app.put('/', async (req, res) => {
   if (!validate(req.body, scehma.proof.put).valid) {
     return res.status(HttpStatus.BAD_REQUEST).json({ error: `invalid schema - expected schema is ${util.inspect(scehma.proof.put)}` });
   }
-
-  req.body.tracking_id = encodeURIComponent(req.body.tracking_id);
-  req.body.previous_tracking_id = encodeURIComponent(req.body.previous_tracking_id);
     
   try {
     var result = await proof.storeProof(req.body);   

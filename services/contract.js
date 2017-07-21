@@ -9,16 +9,14 @@ var config = require('../config');
 web3.setProvider(new Web3.providers.HttpProvider(config.GET_RPC_ENDPOINT));
 var contractInstance = web3.eth.contract(abi).at(config.CONTRACT_ADDRESS);
 
-var txHashOutstandingCalls = {};
 
 // wrap following functions with a promise so that we can use it with the async convention
 // and add it on the module.exports object
 // TODO: auto generate from abi
 [ 
   { name: 'getProof', method: 'call' },
-  { name: 'startTracking', method: 'sendTransaction', event: 'TrackingStarted' },
-  { name: 'storeProof', method: 'sendTransaction' },  
-  { name: 'transfer', method: 'sendTransaction' }
+  { name: 'storeProof', method: 'sendTransaction', event: 'StoreProofCompleted' },  
+  { name: 'transfer', method: 'sendTransaction', event: 'TransferCompleted' }
 ]
   .forEach(func => {
 
@@ -28,17 +26,9 @@ var txHashOutstandingCalls = {};
 
         // register to the function event listener
         contractInstance[func.event]((err, result) => {
-          console.log(`event raised: ${func.event} with ${util.inspect(err)} and ${util.inspect(result)}`);
           if (err) return console.error(`error in event listener '${func.event}': ${err.message}`);
-          console.log(`got event result: ${util.inspect(result)}`);
-          var cb = txHashOutstandingCalls[result.transactionHash];
-          if (cb) {
-            console.log(`calling callback for tx hash: ${result.transactionHash}`);
-            delete txHashOutstandingCalls[result.transactionHash];
-            return cb(null, result.args);
-          }
+          console.log(`got event result for '${func.event}': ${util.inspect(result)}`);
         });
-
       }
 
       exports[func.name] = function() {
@@ -54,20 +44,13 @@ var txHashOutstandingCalls = {};
             
             console.log(`function '${func.name}' on contract completed successfully`);
 
-            if (func.method === 'call') {
-              console.log(`result: ${result.toString()}`);
-              return resolve(result);
-            }
-            else {
+            // wrap tx hash in an object
+            if (func.method === 'sendTransaction') {
               console.log(`tx hash: ${result}`);
-              return txHashOutstandingCalls[result] = (result => {
-                return (err, res) => {
-                  console.log(`in tx hash callback: ${result}`);
-                  if (err) return reject(err);
-                  return resolve(res);
-                }
-              })(result);
+              result = { txHash: result };
             }
+
+            return resolve(result);
           };
 
           // extract original params and add the callback to the list

@@ -22,6 +22,7 @@ async function getProof(opts) {
     while (trackingId && trackingId != "root") {
 
       var result = await contract.getProof(trackingId);
+      // TODO wrap getProof and return null if doesn't exists
       var proof;
 
       if (!decrypt) {
@@ -60,16 +61,18 @@ async function getProof(opts) {
     return proofs;
 }
 
-async function startTracking(opts) {
-  console.log(`[services/proof:startTracking] opts: ${util.inspect(opts)}`);
+async function storeProof(opts) {
+  console.log(`[services/proof:storeProof] opts: ${util.inspect(opts)}`);
     
   if (!opts.tracking_id) throw new Error(`missing argument 'tracking_id'`);
   if (!opts.public_proof) throw new Error(`missing argument 'public_proof'`);
 
-  var proof = await createProof(opts);
-  var result = await contract.startTracking(opts.tracking_id, opts.encrypted_proof, opts.public_proof, { from: config.ACCOUNT_ADDRESS, gas : config.GAS });
+  opts.previous_tracking_id = opts.previous_tracking_id || "root";
 
-  console.log(`returning startTracking result: ${util.inspect(result)}`);
+  var proof = await createProof(opts);
+  var result = await contract.storeProof(opts.tracking_id, opts.previous_tracking_id, opts.encrypted_proof, opts.public_proof, { from: config.ACCOUNT_ADDRESS, gas : config.GAS });
+
+  console.log(`returning storeProof result: ${util.inspect(result)}`);
   return result;
 }
 
@@ -79,7 +82,13 @@ async function createProof(opts) {
   if (!opts.tracking_id) throw new Error(`missing argument 'tracking_id'`);
   if (!opts.proof_to_encrypt) throw new Error(`missing argument 'proof_to_encrypt'`);
 
-  var keyValue = await key.createKeyIfNotExist(userId, opts.tracking_id);
+  try {
+    var keyValue = await key.createKeyIfNotExist(userId, opts.tracking_id);
+  }
+  catch(err) {
+    console.error(`error creating key for userId: ${userId} and trackingId: ${trackingId}: ${err.message}`);
+    throw err;
+  }
 
   var proofToEncryptStr = JSON.stringify(opts.proof_to_encrypt);
   var hash = sha256(proofToEncryptStr);
@@ -91,16 +100,6 @@ async function createProof(opts) {
   return opts;
 }
 
-// TODO: Test below functions
-async function storeProof(opts) {
-
-  // TODO: add input validation as implemented in above functions
-
-  var proof = await createProof(opts);
-  var result = await contract.storeProof(proof.tracking_id, proof.previous_tracking_id, proof.encrypted_proof, proof.public_proof,  { from: config.ACCOUNT_ADDRESS, gas : config.GAS });
-  return result;  
-}
-
 async function transfer(opts) {
   // TODO: add input validation as implemented in above functions
 
@@ -110,7 +109,6 @@ async function transfer(opts) {
 
 module.exports = {
   getProof,
-  startTracking,
   storeProof,
   transfer
 }

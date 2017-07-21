@@ -61,32 +61,6 @@
           "type": "string"
         },
         {
-          "name": "encryptedProof",
-          "type": "string"
-        },
-        {
-          "name": "publicProof",
-          "type": "string"
-        }
-      ],
-      "name": "startTracking",
-      "outputs": [
-        {
-          "name": "success",
-          "type": "bool"
-        }
-      ],
-      "payable": false,
-      "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "trackingId",
-          "type": "string"
-        },
-        {
           "name": "previousTrackingId",
           "type": "string"
         },
@@ -196,9 +170,36 @@
           "indexed": false,
           "name": "trackingId",
           "type": "string"
+        },
+        {
+          "indexed": false,
+          "name": "previousTrackingId",
+          "type": "string"
         }
       ],
-      "name": "TrackingStarted",
+      "name": "StoreProofCompleted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "trackingId",
+          "type": "string"
+        }
+      ],
+      "name": "TransferCompleted",
       "type": "event"
     }
   ]

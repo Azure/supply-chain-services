@@ -1,5 +1,6 @@
 'use strict';
 
+var util = require('util');
 var azure = require('azure-storage');
 var nodeRSA = require('node-rsa');
 var config = require('../config');
@@ -10,9 +11,15 @@ const keyTableName = 'Keys';
 function writeEntity(tableName, entity) {
   return new Promise(function (resolve, reject) {
     return tableSvc.createTableIfNotExists(tableName, function (err, result, response) {
-      if (err) return reject(err);
+      if (err) {
+        console.error(`error in createTableIfNotExists with ${util.inspect(arguments)}: ${tableName}`);
+        return reject(err);
+      }
       return tableSvc.insertEntity(tableName, entity, function (err, result, response) {
-        if (err) return reject(err);
+        if (err) {
+          console.error(`error in insertEntity with ${util.inspect(arguments)}: ${tableName} ${util.inspect(entity)}`);
+          return reject(err);
+        }
         return resolve(entity.PublicKey._);
       });
     });
@@ -22,7 +29,13 @@ function writeEntity(tableName, entity) {
 function readEntity(tableName, partitionKey, rowKey) {
   return new Promise(function (resolve, reject) {
     return tableSvc.retrieveEntity(tableName, partitionKey, rowKey, function (err, result, response) {
-      if (err) return reject(err);
+      if (err) {
+        // if entity does not exists it's not an error, resolve
+        if (err.statusCode === 404) return resolve();
+
+        console.error(`error in readEntity with ${util.inspect(arguments)}: ${util.inspect(err)}`);
+        return reject(err);
+      }
       return resolve(result);
     });
   });
@@ -58,6 +71,8 @@ async function decrypt(userId, keyId, content) {
 
 async function getPublicKey(userId, keyId) {
   var res = await readEntity(keyTableName, userId, keyId);
+  if (!res) return null;
+
   return {
     key_id: res.RowKey._,
     public_key: res.PublicKey._
@@ -79,10 +94,17 @@ async function createKey(userId, keyId) {
 }     
 
 async function createKeyIfNotExist(userId, keyId) { 
-  var result = await getPublicKey(userId, keyId);
 
+  try {
+    var result = await getPublicKey(userId, keyId);
+  }
+  catch(err) {
+    console.error(`error getting public key: ${util.inspect(err)}`);
+    throw err;
+  }
   if (!result || !result.key_id) {
-    var result = await createKey(userId, keyId);
+
+    result = await createKey(userId, keyId);
     return result;
   }
   

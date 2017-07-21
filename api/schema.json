@@ -1,16 +1,5 @@
 {
   "proof": {
-    
-    "post": {
-      "id": "/ProofPost",
-      "type": "object",
-      "properties": {
-        "tracking_id": { "type": "string" },
-        "proof_to_encrypt": { "type": "object" },
-        "public_proof": { "type": "object" }
-      },
-      "required": ["tracking_id", "proof_to_encrypt", "public_proof"]
-    },
 
     "put": {
       "id": "/ProofPost",
@@ -21,7 +10,7 @@
         "proof_to_encrypt": { "type": "object" },
         "public_proof": { "type": "object" }
       },
-      "required": ["tracking_id", "previous_tracking_id", "proof_to_encrypt", "public_proof"]
+      "required": ["tracking_id", "proof_to_encrypt", "public_proof"]
     },
 
     "patch": {
