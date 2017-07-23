@@ -15,26 +15,25 @@ var app = express();
 
 // TODO: move key_id to params instead of query string
 
-app.get('/', async (req, res) => {
+app.get('/:key_id', async (req, res) => {
 
-  req.checkQuery('key_id', 'Invalid key_id').notEmpty();
+  req.checkParams('key_id', 'Invalid key_id').notEmpty();
   var errors = await req.getValidationResult();
   if (!errors.isEmpty()) {
     return res.status(HttpStatus.BAD_REQUEST).json({ error: `there have been validation errors: ${util.inspect(errors.array())}` });
   }
 
-  var userId = encodeURIComponent(userId);
-  req.query.key_id = encodeURIComponent(req.query.key_id);
+  var keyId = req.params.key_id;
 
   try {
-    var result = await key.getPublicKey(userId, req.query.key_id);
+    var result = await key.getPublicKey(userId, keyId);
   }
   catch(err) {
     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err.message });
   }
 
   if (!result) {
-    return res.status(HttpStatus.NOT_FOUND).json({ error: `key id '${req.query.key_id}' not found` });
+    return res.status(HttpStatus.NOT_FOUND).json({ error: `key id '${keyId}' not found` });
   }
 
   console.log(`sending result: ${util.inspect(result)}`);
