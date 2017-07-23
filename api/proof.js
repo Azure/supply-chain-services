@@ -36,7 +36,7 @@ app.get('/:tracking_id', async (req, res) => {
   }
 
   var opts = { 
-    trackingId: req.params.tracking_id, 
+    trackingId: decodeURIComponent(req.params.tracking_id), 
     decrypt: req.sanitizeQuery('decrypt').toBoolean()
   };
 
@@ -79,7 +79,7 @@ app.patch('/', async (req, res) => {
     return res.status(HttpStatus.BAD_REQUEST).json({ error: `invalid schema - expected schema is ${util.inspect(scehma.proof.patch)}` });
   }
 
-  req.body.tracking_id = encodeURIComponent(req.body.tracking_id);
+  req.body.tracking_id = req.body.tracking_id;
   
   try {
     var result = await proof.transfer(req.body);

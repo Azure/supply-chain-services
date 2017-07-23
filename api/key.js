@@ -23,7 +23,7 @@ app.get('/:key_id', async (req, res) => {
     return res.status(HttpStatus.BAD_REQUEST).json({ error: `there have been validation errors: ${util.inspect(errors.array())}` });
   }
 
-  var keyId = req.params.key_id;
+  var keyId = decodeURIComponent(req.params.key_id);
 
   try {
     var result = await key.getPublicKey(userId, keyId);
@@ -46,8 +46,7 @@ app.post('/', async (req, res) => {
     return res.status(HttpStatus.BAD_REQUEST).json({ error: `invalid schema - expected schema is ${util.inspect(scehma.key.post)}` });
   }
 
-  var userId = encodeURIComponent(userId);
-  req.body.key_id = encodeURIComponent(req.body.key_id);
+  req.body.key_id = req.body.key_id;
             
   try {
     var result = await key.createKey(userId, req.body.key_id);
