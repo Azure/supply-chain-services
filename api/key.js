@@ -45,8 +45,6 @@ app.post('/', async (req, res) => {
   if (!validate(req.body, scehma.key.post).valid) {
     return res.status(HttpStatus.BAD_REQUEST).json({ error: `invalid schema - expected schema is ${util.inspect(scehma.key.post)}` });
   }
-
-  req.body.key_id = req.body.key_id;
             
   try {
     var result = await key.createKey(userId, req.body.key_id);

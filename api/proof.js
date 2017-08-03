@@ -35,8 +35,10 @@ app.get('/:tracking_id', async (req, res) => {
     return res.status(HttpStatus.BAD_REQUEST).json({ error: `there have been validation errors: ${util.inspect(errors.array())}` });
   }
 
+  var trackingId = decodeURIComponent(req.params.tracking_id.trim());
+
   var opts = { 
-    trackingId: decodeURIComponent(req.params.tracking_id), 
+    trackingId, 
     decrypt: req.sanitizeQuery('decrypt').toBoolean()
   };
 

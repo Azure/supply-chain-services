@@ -82,21 +82,13 @@ async function createProof(opts) {
   if (!opts.tracking_id) throw new Error(`missing argument 'tracking_id'`);
   if (!opts.proof_to_encrypt) throw new Error(`missing argument 'proof_to_encrypt'`);
 
-  try {
-    var keyValue = await key.createKeyIfNotExist(userId, opts.tracking_id);
-  }
-  catch(err) {
-    console.error(`error creating key for userId: ${userId} and trackingId: ${trackingId}: ${err.message}`);
-    throw err;
-  }
-
   var proofToEncryptStr = JSON.stringify(opts.proof_to_encrypt);
   var hash = sha256(proofToEncryptStr);
   opts.public_proof = JSON.stringify({
     encrypted_proof_hash : hash.toUpperCase(),
     public_proof : opts.public_proof
   });
-  opts.encrypted_proof = key.encrypt(keyValue, proofToEncryptStr);
+  opts.encrypted_proof = await key.encrypt(userId, opts.tracking_id, proofToEncryptStr);
   return opts;
 }
 

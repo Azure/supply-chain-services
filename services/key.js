@@ -6,36 +6,63 @@ var nodeRSA = require('node-rsa');
 var config = require('../config');
 
 const tableSvc = azure.createTableService(config.AZURE_STORAGE_CONNECTION_STRING);
-const keyTableName = 'Keys';
+const keyTableName = 'keys';
+
+tableSvc.createTableIfNotExists(keyTableName, (err, result, response) => {
+  if (err) {
+    return console.error(`error creating table '${keyTableName}', error: ${err.message}`);
+  }
+
+  if (result.created) {
+    return console.log(`table '${keyTableName}' created`);
+  }
+});
 
 function writeEntity(tableName, entity) {
-  return new Promise(function (resolve, reject) {
-    return tableSvc.createTableIfNotExists(tableName, function (err, result, response) {
+
+  if (entity.PartitionKey._ === decodeURIComponent(entity.PartitionKey._)) {
+    entity.PartitionKey._ = encodeURIComponent(entity.PartitionKey._);
+  }  
+  
+  if (entity.RowKey._ === decodeURIComponent(entity.RowKey._)) {
+    entity.RowKey._ = encodeURIComponent(entity.RowKey._);
+  }
+
+  return new Promise((resolve, reject) => {
+    return tableSvc.insertEntity(tableName, entity, (err, result, response) => {
       if (err) {
-        console.error(`error in createTableIfNotExists with ${util.inspect(arguments)}: ${tableName}`);
+        console.error(`error in insertEntity with ${util.inspect(arguments)}: ${tableName} ${util.inspect(entity)}`);
         return reject(err);
       }
-      return tableSvc.insertEntity(tableName, entity, function (err, result, response) {
-        if (err) {
-          console.error(`error in insertEntity with ${util.inspect(arguments)}: ${tableName} ${util.inspect(entity)}`);
-          return reject(err);
-        }
-        return resolve(entity.PublicKey._);
-      });
+      console.log(`new key entity created: ${util.inspect(entity)}`);
+      return resolve(entity);
     });
   });
 }
 
 function readEntity(tableName, partitionKey, rowKey) {
-  return new Promise(function (resolve, reject) {
-    return tableSvc.retrieveEntity(tableName, partitionKey, rowKey, function (err, result, response) {
-      if (err) {
-        // if entity does not exists it's not an error, resolve
-        if (err.statusCode === 404) return resolve();
+  
+  if (partitionKey === decodeURIComponent(partitionKey)) {
+    partitionKey = encodeURIComponent(partitionKey);
+  }  
+  
+  if (rowKey === decodeURIComponent(rowKey)) {
+    rowKey = encodeURIComponent(rowKey);
+  }
 
+  return new Promise((resolve, reject) => {
+    return tableSvc.retrieveEntity(tableName, partitionKey, rowKey, (err, result, response) => {
+      if (err) {
+        if (err.statusCode === 404) {
+          return resolve();
+        }
         console.error(`error in readEntity with ${util.inspect(arguments)}: ${util.inspect(err)}`);
         return reject(err);
       }
+
+      result.PartitionKey._ = decodeURIComponent(result.PartitionKey._);
+      result.RowKey._ = decodeURIComponent(result.RowKey._);
+      
       return resolve(result);
     });
   });
@@ -47,24 +74,28 @@ function generateNewKey(){
 
 var entGen = azure.TableUtilities.entityGenerator;
 
-function encrypt(publicKey, content) {
+async function encrypt(userId, keyId, content) {
   var rsa = new nodeRSA(); 
-  rsa.importKey(publicKey, 'pkcs1-public-pem');
-  return rsa.encrypt(content, 'base64', 'UTF8');
+  var entity = await readEntity(keyTableName, userId, keyId);
+  if (!entity) {
+    entity = await createKey(userId, keyId);
+  }
+  rsa.importKey(entity.PublicKey._, 'pkcs1-public-pem');
+  var encrypted = rsa.encrypt(content, 'base64', 'UTF8');
+  return encrypted;
 }
 
 async function decrypt(userId, keyId, content) {
   var rsa = new nodeRSA(); 
   var res = await readEntity(keyTableName, userId, keyId);
-
   rsa.importKey(res.PrivateKey._, 'pkcs1-private-pem');
   try {
     var decyrptedContent = rsa.decrypt(content, 'UTF8');
     return decyrptedContent;
   }
   catch(err) {
-    console.error(`error: ${err.message}`);
-    // TODO: check with Beat- do we want to throw here or should we return the content not decrypted?
+    console.error(`error decrypting content: ${err.message}`);
+    throw err;
   }
   return content;
 }
@@ -89,33 +120,11 @@ async function createKey(userId, keyId) {
     PrivateKey: entGen.String(key.exportKey('pkcs1-private-pem')),
   };
 
-  var res = await writeEntity(keyTableName, entity);
-  return res;
-}     
-
-async function createKeyIfNotExist(userId, keyId) { 
-
-  try {
-    var result = await getPublicKey(userId, keyId);
-  }
-  catch(err) {
-    console.error(`error getting public key: ${util.inspect(err)}`);
-    throw err;
-  }
-  if (!result || !result.key_id) {
-
-    result = await createKey(userId, keyId);
-    return result;
-  }
-  
-  return result.public_key;
- }
-
+  return await writeEntity(keyTableName, entity);
+}
 
 module.exports = {
   getPublicKey,
-  createKey,
-  createKeyIfNotExist,
   encrypt,
   decrypt
 }
