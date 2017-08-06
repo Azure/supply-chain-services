@@ -105,8 +105,8 @@ async function getPublicKey(userId, keyId) {
   if (!res) return null;
 
   return {
-    key_id: res.RowKey._,
-    public_key: res.PublicKey._
+    keyId: res.RowKey._,
+    publicKey: res.PublicKey._
   }
 }
 

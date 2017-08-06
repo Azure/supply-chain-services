@@ -13,17 +13,15 @@ var app = express();
 
 // TODO: test below APIs
 
-// TODO: move key_id to params instead of query string
+app.get('/:keyId', async (req, res) => {
 
-app.get('/:key_id', async (req, res) => {
-
-  req.checkParams('key_id', 'Invalid key_id').notEmpty();
+  req.checkParams('keyId', 'Invalid keyId').notEmpty();
   var errors = await req.getValidationResult();
   if (!errors.isEmpty()) {
     return res.status(HttpStatus.BAD_REQUEST).json({ error: `there have been validation errors: ${util.inspect(errors.array())}` });
   }
 
-  var keyId = decodeURIComponent(req.params.key_id);
+  var keyId = decodeURIComponent(req.params.keyId);
 
   try {
     var result = await key.getPublicKey(userId, keyId);
@@ -47,7 +45,7 @@ app.post('/', async (req, res) => {
   }
             
   try {
-    var result = await key.createKey(userId, req.body.key_id);
+    var result = await key.createKey(userId, req.body.keyId);
   }
   catch(err) {
     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err.message });

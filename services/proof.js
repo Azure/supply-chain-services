@@ -22,39 +22,41 @@ async function getProof(opts) {
     while (trackingId && trackingId != "root") {
 
       var result = await contract.getProof(trackingId);
+      if (!result) return null;
+
       // TODO wrap getProof and return null if doesn't exists
       var proof;
 
       if (!decrypt) {
-        proof = result[1];
+        proof = result.encryptedProof;
       }
       else {
-        var decrypted = await key.decrypt(userId, trackingId, result[1]);
+        var decrypted = await key.decrypt(userId, trackingId, result.encryptedProof);
 
         // ensure we always return a valid json, even if we get back a string
-        var decryptedJson = { raw_content : decrypted};
+        var decryptedJson = { rawContent : decrypted};
 
         try {
           decryptedJson = JSON.parse(decrypted);
         }
-        catch(ex) {
-          console.warn(`invalid decrypted json: ${decrypted}`);
+        catch(err) {
+          console.warn(`invalid decrypted json: ${decrypted}: ${err.message}`);
         };
 
         proof = decryptedJson;     
       }
 
       // check if we got a valid proof
-      if (result[3].length > 0) {
+      if (result.previousTrackingId) {
         proofs.push({
-            tracking_id: trackingId,
-            owner: result[0],
-            encrypted_proof: proof,
-            public_proof: result[2].length > 0 ? JSON.parse(result[2]) : result[2],
-            previous_tracking_id: result[3]
+          trackingId: trackingId,
+          owner: result.owner,
+          encryptedProof: proof,
+          publicProof: result.publicProof ? JSON.parse(result.publicProof) : result.publicProof,
+          previousTrackingId: result.previousTrackingId
         });
 
-        trackingId = result[3];
+        trackingId = result.previousTrackingId;
       }
     }
     
@@ -64,13 +66,20 @@ async function getProof(opts) {
 async function storeProof(opts) {
   console.log(`[services/proof:storeProof] opts: ${util.inspect(opts)}`);
     
-  if (!opts.tracking_id) throw new Error(`missing argument 'tracking_id'`);
-  if (!opts.public_proof) throw new Error(`missing argument 'public_proof'`);
+  if (!opts.trackingId) throw new Error(`missing argument 'trackingId'`);
+  if (!opts.publicProof) throw new Error(`missing argument 'publicProof'`);
 
-  opts.previous_tracking_id = opts.previous_tracking_id || "root";
+  opts.previousTrackingId = opts.previousTrackingId || "root";
 
   var proof = await createProof(opts);
-  var result = await contract.storeProof(opts.tracking_id, opts.previous_tracking_id, opts.encrypted_proof, opts.public_proof, { from: config.ACCOUNT_ADDRESS, gas : config.GAS });
+
+  var result = await contract.storeProof({
+    trackingId: opts.trackingId, 
+    previousTrackinId: opts.previousTrackingId, 
+    encryptedProof: opts.encryptedProof, 
+    publicProof: opts.publicProof,
+    config: { from: config.ACCOUNT_ADDRESS, gas : config.GAS }
+  });
 
   console.log(`returning storeProof result: ${util.inspect(result)}`);
   return result;
@@ -79,23 +88,28 @@ async function storeProof(opts) {
 async function createProof(opts) {
   console.log(`[services/proof:createProof] opts: ${util.inspect(opts)}`);
      
-  if (!opts.tracking_id) throw new Error(`missing argument 'tracking_id'`);
-  if (!opts.proof_to_encrypt) throw new Error(`missing argument 'proof_to_encrypt'`);
+  if (!opts.trackingId) throw new Error(`missing argument 'trackingId'`);
+  if (!opts.proofToEncrypt) throw new Error(`missing argument 'proofToEncrypt'`);
 
-  var proofToEncryptStr = JSON.stringify(opts.proof_to_encrypt);
+  var proofToEncryptStr = JSON.stringify(opts.proofToEncrypt);
   var hash = sha256(proofToEncryptStr);
-  opts.public_proof = JSON.stringify({
-    encrypted_proof_hash : hash.toUpperCase(),
-    public_proof : opts.public_proof
+  opts.publicProof = JSON.stringify({
+    encryptedProofHash : hash.toUpperCase(),
+    publicProof : opts.publicProof
   });
-  opts.encrypted_proof = await key.encrypt(userId, opts.tracking_id, proofToEncryptStr);
+  opts.encryptedProof = await key.encrypt(userId, opts.trackingId, proofToEncryptStr);
   return opts;
 }
 
 async function transfer(opts) {
   // TODO: add input validation as implemented in above functions
 
-  var result = await contract.transfer(transfer.tracking_id, transfer.transfer_to, { from: config.ACCOUNT_ADDRESS, gas : config.GAS });
+  var result = await contract.transfer({
+    trackingId: opts.trackingId, 
+    transferTo: opts.transferTo, 
+    config: { from: config.ACCOUNT_ADDRESS, gas : config.GAS }
+  });
+
   return result;  
 }
 

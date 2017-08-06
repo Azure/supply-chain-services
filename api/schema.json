@@ -5,22 +5,22 @@
       "id": "/ProofPost",
       "type": "object",
       "properties": {
-        "tracking_id": { "type": "string" },
-        "previous_tracking_id" : { "type" : "string" },
-        "proof_to_encrypt": { "type": "object" },
-        "public_proof": { "type": "object" }
+        "trackingId": { "type": "string" },
+        "previousTrackingId" : { "type" : "string" },
+        "proofToEncrypt": { "type": "object" },
+        "publicProof": { "type": "object" }
       },
-      "required": ["tracking_id", "proof_to_encrypt", "public_proof"]
+      "required": ["trackingId", "proofToEncrypt", "publicProof"]
     },
 
     "patch": {
       "id": "/ProofPost",
       "type": "object",
       "properties": {
-        "tracking_id": { "type": "string" },
-        "transfer_tor" : { "type" : "string" }
+        "trackingId": { "type": "string" },
+        "transferTo" : { "type" : "string" }
       },
-      "required": ["tracking_id", "transfer_to"]
+      "required": ["trackingId", "transferTo"]
     }
   },
 
@@ -29,9 +29,9 @@
       "id": "/ProofPost",
       "type": "object",
       "properties": {
-          "key_id": { "type": "string" }
+          "keyId": { "type": "string" }
       },
-      "required": ["key_id"]
+      "required": ["keyId"]
     }
   }
 }
