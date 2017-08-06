@@ -13,6 +13,7 @@ var app = express();
 
 // TODO: test below APIs
 
+
 app.get('/:keyId', async (req, res) => {
 
   req.checkParams('keyId', 'Invalid keyId').notEmpty();
@@ -27,16 +28,19 @@ app.get('/:keyId', async (req, res) => {
     var result = await key.getPublicKey(userId, keyId);
   }
   catch(err) {
+    console.error(`error getting public key: ${err.message}`);
     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err.message });
   }
 
   if (!result) {
+    console.error(`public key does not exist: ${keyId}`);
     return res.status(HttpStatus.NOT_FOUND).json({ error: `key id '${keyId}' not found` });
   }
 
   console.log(`sending result: ${util.inspect(result)}`);
   return res.json(result);
 });
+
 
 app.post('/', async (req, res) => {
 
@@ -48,6 +52,7 @@ app.post('/', async (req, res) => {
     var result = await key.createKey(userId, req.body.keyId);
   }
   catch(err) {
+    console.error(`error creating a key: ${err.message}`);
     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: err.message });
   }
 

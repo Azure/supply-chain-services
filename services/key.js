@@ -68,22 +68,32 @@ function readEntity(tableName, partitionKey, rowKey) {
   });
 }
 
-function generateNewKey(){
-   return new nodeRSA({b: 512}); 
-}
-
 var entGen = azure.TableUtilities.entityGenerator;
+
 
 async function encrypt(userId, keyId, content) {
   var rsa = new nodeRSA(); 
   var entity = await readEntity(keyTableName, userId, keyId);
+
   if (!entity) {
-    entity = await createKey(userId, keyId);
+    // generate and store a new key
+    var key = new nodeRSA({b: 512}); 
+
+    var entity = {
+      PartitionKey: entGen.String(userId),
+      RowKey: entGen.String(keyId),
+      PublicKey: entGen.String(key.exportKey('pkcs1-public-pem')),
+      PrivateKey: entGen.String(key.exportKey('pkcs1-private-pem')),
+    };
+
+    entity = await writeEntity(keyTableName, entity);
   }
+
   rsa.importKey(entity.PublicKey._, 'pkcs1-public-pem');
   var encrypted = rsa.encrypt(content, 'base64', 'UTF8');
   return encrypted;
 }
+
 
 async function decrypt(userId, keyId, content) {
   var rsa = new nodeRSA(); 
@@ -100,6 +110,7 @@ async function decrypt(userId, keyId, content) {
   return content;
 }
 
+
 async function getPublicKey(userId, keyId) {
   var res = await readEntity(keyTableName, userId, keyId);
   if (!res) return null;
@@ -110,21 +121,9 @@ async function getPublicKey(userId, keyId) {
   }
 }
 
-async function createKey(userId, keyId) {
-  var key = generateNewKey();
-
-  var entity = {
-    PartitionKey: entGen.String(userId),
-    RowKey: entGen.String(keyId),
-    PublicKey: entGen.String(key.exportKey('pkcs1-public-pem')),
-    PrivateKey: entGen.String(key.exportKey('pkcs1-private-pem')),
-  };
-
-  return await writeEntity(keyTableName, entity);
-}
 
 module.exports = {
-  getPublicKey,
+  decrypt,
   encrypt,
-  decrypt
+  getPublicKey
 }

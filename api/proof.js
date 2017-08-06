@@ -9,21 +9,7 @@ var proof = require('../services/proof');
 
 var app = express();
 
-/*
-return object sample:
 
-[ { trackingId: 'id_KXaX8165zjlTavS%2BuEvK6agBpAXkl5jiI%2FmOmJX4%2Bps%3D',
-    owner: '0xfcfe4d8a6df673465d9532befd917a6ed701c910',
-    encryptedProof: 
-     { url: 'https://iberat2keys.blob.core.windows.net/attachments/FarmerID100/fw4.pdf',
-       sasToken: 'https://iberat2keys.blob.core.windows.net/attachments/FarmerID100/fw4.pdf?sv=2016-05-31&sr=b&sig=02Zs2iqGi3l0E6EdXqjY7jeoT8mp1koZQ5pro4ukWyY%3D&se=2017-07-23T08%3A54%3A55Z&sp=r',
-       documentName: 'fw4.pdf' },
-    publicProof: 
-     { encryptedProofHash: 'B5A4BB9BE43D9AD87CB85893F406D7035FC9233BDB21B43E504B7A8D47552AAF',
-       publicProof: [Object] },
-    previousTrackingId: 'root' } ]
-
-*/
 app.get('/:trackingId', async (req, res) => {
 
   req.checkParams('trackingId', 'Invalid trackingId').notEmpty();
@@ -75,6 +61,7 @@ app.put('/', async (req, res) => {
   console.log(`sending result: ${util.inspect(result)}`);
   return res.json(result);
 });
+
 
 app.patch('/', async (req, res) => {
   if (!validate(req.body, scehma.proof.patch).valid) {
