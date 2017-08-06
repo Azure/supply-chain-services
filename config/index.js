@@ -22,7 +22,6 @@ var config = {
   CONTRACT_ADDRESS: nconfig.get('CONTRACT_ADDRESS'),
   ACCOUNT_ADDRESS: nconfig.get('ACCOUNT_ADDRESS'),
   GET_RPC_ENDPOINT: nconfig.get('GET_RPC_ENDPOINT'),
-  GET_RPC_PRIVATE_ENDPOINT: nconfig.get('GET_RPC_PRIVATE_ENDPOINT'),
   AZURE_STORAGE_CONNECTION_STRING: nconfig.get('AZURE_STORAGE_CONNECTION_STRING')
 }
 
@@ -41,7 +40,6 @@ if (typeof config.GAS !== 'number') {
   'CONTRACT_ADDRESS',
   'ACCOUNT_ADDRESS',
   'GET_RPC_ENDPOINT',
-  'GET_RPC_PRIVATE_ENDPOINT',
   'AZURE_STORAGE_CONNECTION_STRING',
   'GAS'
 ].forEach(param => validate(param));

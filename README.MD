@@ -1,6 +1,22 @@
 # ibera-services
 
-## update smart contracts
+
+
+## configuration 
+
+To run locally, copy the file `dev.sample.json` in the `config` folder and create a new file called `dev.private.json`.
+
+Fill in the following values:
+
+`CONTRACT_ADDRESS`: Your contract address, see details below
+`ACCOUNT_ADDRESS` : Your account address, see details below
+`GAS`: The default GAS value 
+`GET_RPC_ENDPOINT` : The RPC endpoint
+`AZURE_STORAGE_CONNECTION_STRING`- A connection string to your Azure Storage Account where we keep the keys to encrypt and decrypt the proofs
+
+When deploying to production, fill these values in the environment variables.
+
+### update smart contracts
 
 Open the ibera-smart-contracts project and update your contract
 run `truffle deploy` 
@@ -21,7 +37,7 @@ you then can create an instance of the contract by using the abi and the address
 const contractAddress = nconf.get('CONTRACT_ADDRESS');
 var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 ```
-## Specify the Ethereum address
+### Specify the Ethereum address
 In addition to deploying the contract, you also need to create an Ethereum account and link this to the service through the environment setting called `ACCOUNT_ADDRESS` such as here in the local `config.json`:
 
 ```
