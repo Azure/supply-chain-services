@@ -27,7 +27,7 @@ var config = {
 
 config.GAS = nconfig.get('GAS');
 if (typeof config.GAS === 'string') {
-  config.GAS = parseInt(config.gas);
+  config.GAS = parseInt(config.GAS);
 }
 if (typeof config.GAS !== 'number') {
   // if not exists, use default value
