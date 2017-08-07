@@ -21,11 +21,11 @@ var nconfig = nconf.env().file({ file: envFile });
 var config = {
   CONTRACT_ADDRESS: nconfig.get('CONTRACT_ADDRESS'),
   ACCOUNT_ADDRESS: nconfig.get('ACCOUNT_ADDRESS'),
+  GAS: nconfig.get('GAS'),
   GET_RPC_ENDPOINT: nconfig.get('GET_RPC_ENDPOINT'),
   AZURE_STORAGE_CONNECTION_STRING: nconfig.get('AZURE_STORAGE_CONNECTION_STRING')
 }
 
-config.GAS = nconfig.get('GAS');
 if (typeof config.GAS === 'string') {
   config.GAS = parseInt(config.GAS);
 }
