@@ -137,7 +137,7 @@ var api = {
       }
       
       var storeProofPrice = await client.storeProofGetPrice(opts.trackingId, opts.previousTrackinId, opts.encryptedProof, opts.publicProof, opts.config);
-      opts.config.gas = storeProofPrice.price;
+      opts.config.gas = storeProofPrice.price * 2;
       var res = await client.storeProof(opts.trackingId, opts.previousTrackinId, opts.encryptedProof, opts.publicProof, opts.config);
       
       var lockRes = await web3Personal.lockAccount(opts.config.from, opts.config.password);
