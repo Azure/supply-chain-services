@@ -91,8 +91,7 @@ async function storeProof(opts) {
     publicProof: publicProof,
     config: { 
       from: config.ACCOUNT_ADDRESS, 
-      password: config.ACCOUNT_PASSWORD,
-      gas : config.GAS 
+      password: config.ACCOUNT_PASSWORD
     }
   });
 
