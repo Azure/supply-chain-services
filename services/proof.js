@@ -89,7 +89,11 @@ async function storeProof(opts) {
     previousTrackinId: opts.previousTrackingId, 
     encryptedProof: encryptedProof, 
     publicProof: publicProof,
-    config: { from: config.ACCOUNT_ADDRESS, gas : config.GAS }
+    config: { 
+      from: config.ACCOUNT_ADDRESS, 
+      password: config.ACCOUNT_PASSWORD,
+      gas : config.GAS 
+    }
   });
 
   console.log(`returning storeProof result: ${util.inspect(result)}`);

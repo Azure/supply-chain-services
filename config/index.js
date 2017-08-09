@@ -21,6 +21,7 @@ var nconfig = nconf.env().file({ file: envFile });
 var config = {
   CONTRACT_ADDRESS: nconfig.get('CONTRACT_ADDRESS'),
   ACCOUNT_ADDRESS: nconfig.get('ACCOUNT_ADDRESS'),
+  ACCOUNT_PASSWORD: nconfig.get('ACCOUNT_PASSWORD'),
   GAS: nconfig.get('GAS'),
   GET_RPC_ENDPOINT: nconfig.get('GET_RPC_ENDPOINT'),
   AZURE_STORAGE_CONNECTION_STRING: nconfig.get('AZURE_STORAGE_CONNECTION_STRING')
@@ -34,11 +35,11 @@ if (typeof config.GAS !== 'number') {
   config.GAS = 2000000;
 }
 
-
 // validate configuration
 [
   'CONTRACT_ADDRESS',
   'ACCOUNT_ADDRESS',
+  'ACCOUNT_PASSWORD',
   'GET_RPC_ENDPOINT',
   'AZURE_STORAGE_CONNECTION_STRING',
   'GAS'

@@ -65,6 +65,18 @@ var client = {};
     }
 });
 
+async function unlockAccount(address, passwd) {
+  return new Promise((resolve, reject) => {
+    web3.personal.unlockAccount(address, passwd, (err, res) => {
+      if (err) {
+        console.error(`error unlocking account from blockchain: ${err.message}`)
+        return reject(err);
+      }
+      return resolve(res);
+    });
+  });
+}
+
 var api = {
   getProof: async (trackingId) => {
     try {
@@ -92,6 +104,7 @@ var api = {
 
   storeProof: async (opts) => {
     try {
+      var unlockRes = await unlockAccount(opts.config.from, opts.config.password);
       var res = await client.storeProof(opts.trackingId, opts.previousTrackinId, opts.encryptedProof, opts.publicProof, opts.config);
     }
     catch(err) {
@@ -113,7 +126,9 @@ var api = {
     }
 
     return res;
-  }
+  },
+
+  web3
 };
 
 module.exports = api;
