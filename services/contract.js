@@ -135,9 +135,11 @@ var api = {
       if (!unlockRes) {
         throw new Error(`error unlocking account: ${opts.config.from}`);
       }
-      
+      console.log(`getting gas price`);
       var storeProofPrice = await client.storeProofGetPrice(opts.trackingId, opts.previousTrackinId, opts.encryptedProof, opts.publicProof, opts.config);
+      
       opts.config.gas = storeProofPrice.price * 2;
+      console.log(`got gas price: ${storeProofPrice.price}, paying ${opts.config.gas}`);
       var res = await client.storeProof(opts.trackingId, opts.previousTrackinId, opts.encryptedProof, opts.publicProof, opts.config);
       /*
       var lockRes = await web3Personal.lockAccount(opts.config.from, opts.config.password);
