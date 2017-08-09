@@ -1,0 +1,37 @@
+{
+  "proof": {
+
+    "put": {
+      "id": "/ProofPost",
+      "type": "object",
+      "properties": {
+        "trackingId": { "type": "string" },
+        "previousTrackingId" : { "type" : "string" },
+        "proofToEncrypt": { "type": "object" },
+        "publicProof": { "type": "object" }
+      },
+      "required": ["trackingId", "proofToEncrypt", "publicProof"]
+    },
+
+    "patch": {
+      "id": "/ProofPost",
+      "type": "object",
+      "properties": {
+        "trackingId": { "type": "string" },
+        "transferTo" : { "type" : "string" }
+      },
+      "required": ["trackingId", "transferTo"]
+    }
+  },
+
+  "key": {
+    "post": {
+      "id": "/ProofPost",
+      "type": "object",
+      "properties": {
+          "keyId": { "type": "string" }
+      },
+      "required": ["keyId"]
+    }
+  }
+}

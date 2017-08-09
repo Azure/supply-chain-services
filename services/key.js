@@ -1,108 +1,129 @@
 'use strict';
-var nconf = require('nconf'),
-    azure = require('azure-storage'),
-    nodeRSA = require('node-rsa');
 
-nconf.argv()
-   .env()
-   .file({ file: 'config.json' });
+var util = require('util');
+var azure = require('azure-storage');
+var nodeRSA = require('node-rsa');
+var config = require('../config');
 
-const storageConnectionString = nconf.get('AZURE_STORAGE_CONNECTION_STRING');
-const tableSvc = azure.createTableService(storageConnectionString);
-const keyTableName = 'Keys';
+const tableSvc = azure.createTableService(config.AZURE_STORAGE_CONNECTION_STRING);
+const keyTableName = 'keys';
 
-function WriteEntity(tableName, entity) {
-    return new Promise(function (fulfill, reject) {
-        tableSvc.createTableIfNotExists(tableName, function (error, result, response) {
-            if (!error) {
-                tableSvc.insertEntity(tableName, entity, function (error, result, response) {
-                    if (!error) {
-                        return fulfill(entity.PublicKey._);
-                    }
-                    else {
-                        return reject(error);
-                    }
-                });
-            }
-            else {
-               return reject(error);
-            }
-        });
+tableSvc.createTableIfNotExists(keyTableName, (err, result, response) => {
+  if (err) {
+    return console.error(`error creating table '${keyTableName}', error: ${err.message}`);
+  }
+
+  if (result.created) {
+    return console.log(`table '${keyTableName}' created`);
+  }
+});
+
+function writeEntity(tableName, entity) {
+
+  if (entity.PartitionKey._ === decodeURIComponent(entity.PartitionKey._)) {
+    entity.PartitionKey._ = encodeURIComponent(entity.PartitionKey._);
+  }  
+  
+  if (entity.RowKey._ === decodeURIComponent(entity.RowKey._)) {
+    entity.RowKey._ = encodeURIComponent(entity.RowKey._);
+  }
+
+  return new Promise((resolve, reject) => {
+    return tableSvc.insertEntity(tableName, entity, (err, result, response) => {
+      if (err) {
+        console.error(`error in insertEntity with ${util.inspect(arguments)}: ${tableName} ${util.inspect(entity)}`);
+        return reject(err);
+      }
+      console.log(`new key entity created: ${util.inspect(entity)}`);
+      return resolve(entity);
     });
+  });
 }
 
-function ReadEntity(tableName, partitionKey, rowKey) {
-    return new Promise(function (fulfill, reject) {
-        tableSvc.retrieveEntity(tableName, partitionKey, rowKey, function (error, result, response) {
-            if (!error) {
-                return fulfill(result);
-            }
-            else {
-                return reject(error);
-            }
-        });
-    });
-}
+function readEntity(tableName, partitionKey, rowKey) {
+  
+  if (partitionKey === decodeURIComponent(partitionKey)) {
+    partitionKey = encodeURIComponent(partitionKey);
+  }  
+  
+  if (rowKey === decodeURIComponent(rowKey)) {
+    rowKey = encodeURIComponent(rowKey);
+  }
 
-function generateNewKey(){
-   return new nodeRSA({b: 512}); 
+  return new Promise((resolve, reject) => {
+    return tableSvc.retrieveEntity(tableName, partitionKey, rowKey, (err, result, response) => {
+      if (err) {
+        if (err.statusCode === 404) {
+          return resolve();
+        }
+        console.error(`error in readEntity with ${util.inspect(arguments)}: ${util.inspect(err)}`);
+        return reject(err);
+      }
+
+      result.PartitionKey._ = decodeURIComponent(result.PartitionKey._);
+      result.RowKey._ = decodeURIComponent(result.RowKey._);
+      
+      return resolve(result);
+    });
+  });
 }
 
 var entGen = azure.TableUtilities.entityGenerator;
 
-module.exports = {
-    getPublicKey: function (userId, keyId, next) {
-        ReadEntity(keyTableName, userId, keyId).then(function (res) {
-            return next({
-                key_id: res.RowKey._,
-                public_key: res.PublicKey._
-            });
-        },
-        function (err) { next(null); });
-    },
-    createKey: function(userId, keyId, next) {
-        let key = generateNewKey();
-        var entity = {
-            PartitionKey: entGen.String(userId),
-            RowKey: entGen.String(keyId),
-            PublicKey: entGen.String(key.exportKey('pkcs1-public-pem')),
-            PrivateKey: entGen.String(key.exportKey('pkcs1-private-pem')),
-        };
-        WriteEntity(keyTableName, entity).then(
-            function (res) { return next(res); },
-            function (err) { return next(err); }
-        );
 
-    },
-    createKeyIfNotExist: function(userId, keyId, next){
-        module.exports.getPublicKey(userId, keyId, function(result){
-            if (!result || !result.key_id){
-                module.exports.createKey(userId, keyId, function(result){
-                    return next(result)
-                });
-            }
-            else {
-                return next(result.public_key)
-            }
-        });
-    },
-    encrypt: function(publicKey, content){
-        var rsa = new nodeRSA(); 
-        rsa.importKey(publicKey, 'pkcs1-public-pem');
-        return rsa.encrypt(content, 'base64', 'UTF8');
-    },
-    decrypt: function(userId, keyId, content, next){
-        var rsa = new nodeRSA(); 
-        ReadEntity(keyTableName, userId, keyId).then(function (res) {
-            rsa.importKey(res.PrivateKey._, 'pkcs1-private-pem');
-            try {
-                var decyrptedContent = rsa.decrypt(content, 'UTF8');
-                return next(decyrptedContent);
-            }
-            catch(ex){
-                return next(content);
-            }
-        },
-        function (err) { return next(content); });
-    }
+async function encrypt(userId, keyId, content) {
+  var rsa = new nodeRSA(); 
+  var entity = await readEntity(keyTableName, userId, keyId);
+
+  if (!entity) {
+    // generate and store a new key
+    var key = new nodeRSA({b: 512}); 
+
+    var entity = {
+      PartitionKey: entGen.String(userId),
+      RowKey: entGen.String(keyId),
+      PublicKey: entGen.String(key.exportKey('pkcs1-public-pem')),
+      PrivateKey: entGen.String(key.exportKey('pkcs1-private-pem')),
+    };
+
+    entity = await writeEntity(keyTableName, entity);
+  }
+
+  rsa.importKey(entity.PublicKey._, 'pkcs1-public-pem');
+  var encrypted = rsa.encrypt(content, 'base64', 'UTF8');
+  return encrypted;
+}
+
+
+async function decrypt(userId, keyId, content) {
+  var rsa = new nodeRSA(); 
+  var res = await readEntity(keyTableName, userId, keyId);
+  rsa.importKey(res.PrivateKey._, 'pkcs1-private-pem');
+  try {
+    var decyrptedContent = rsa.decrypt(content, 'UTF8');
+    return decyrptedContent;
+  }
+  catch(err) {
+    console.error(`error decrypting content: ${err.message}`);
+    throw err;
+  }
+  return content;
+}
+
+
+async function getPublicKey(userId, keyId) {
+  var res = await readEntity(keyTableName, userId, keyId);
+  if (!res) return null;
+
+  return {
+    keyId: res.RowKey._,
+    publicKey: res.PublicKey._
+  }
+}
+
+
+module.exports = {
+  decrypt,
+  encrypt,
+  getPublicKey
 }

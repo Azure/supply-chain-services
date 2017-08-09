@@ -1,122 +1,121 @@
 'use strict';
-var nconf = require('nconf'),
-    Web3 = require('web3'),
-    web3 = new Web3(),
-    sha256 = require('sha256'),
-    key = require('./key.js');
 
-nconf.argv()
-   .env()
-   .file({ file: 'config.json' });
+var sha256 = require('sha256');
+var util = require('util');
 
+var key = require('./key');
+var contract = require('./contract');
+var config = require('../config');
+
+// TODO move userId to options object in each API
 const userId = "un-authenticated";
 
-const gethRpcEndpoint = nconf.get('geth_rpc_endpoint');
-const contractAddress = nconf.get('deployed_contract_address');
-const account = nconf.get('account_address');
-const proofAbi = [ { "constant": true, "inputs": [ { "name": "trackingId", "type": "string" } ], "name": "getPreviousTrackingId", "outputs": [ { "name": "previousTrackingId", "type": "string" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "trackingId", "type": "string" } ], "name": "getEncryptedProof", "outputs": [ { "name": "encryptedProof", "type": "string" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "trackingId", "type": "string" } ], "name": "getOwner", "outputs": [ { "name": "owner", "type": "address" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "trackingId", "type": "string" }, { "name": "encryptedProof", "type": "string" }, { "name": "publicProof", "type": "string" } ], "name": "startTracking", "outputs": [ { "name": "success", "type": "bool" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "trackingId", "type": "string" }, { "name": "previousTrackingId", "type": "string" }, { "name": "encryptedProof", "type": "string" }, { "name": "publicProof", "type": "string" } ], "name": "storeProof", "outputs": [ { "name": "success", "type": "bool" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "trackingId", "type": "string" } ], "name": "getProof", "outputs": [ { "name": "owner", "type": "address" }, { "name": "encryptedProof", "type": "string" }, { "name": "publicProof", "type": "string" }, { "name": "previousTrackingId", "type": "string" } ], "payable": false, "type": "function" }, { "constant": true, "inputs": [ { "name": "trackingId", "type": "string" } ], "name": "getPublicProof", "outputs": [ { "name": "publicProof", "type": "string" } ], "payable": false, "type": "function" }, { "constant": false, "inputs": [ { "name": "trackingId", "type": "string" }, { "name": "newOwner", "type": "address" } ], "name": "transfer", "outputs": [ { "name": "success", "type": "bool" } ], "payable": false, "type": "function" }, { "inputs": [], "payable": false, "type": "constructor" } ];
-web3.setProvider(new Web3.providers.HttpProvider(gethRpcEndpoint));
-var contractInstance = web3.eth.contract(proofAbi).at(contractAddress);
 
-function callGetProof(trackingId, decrypt, proofs, next){
-    contractInstance.getProof.call(trackingId , function(error, result){
-        if (!error) {
-            let pushProof = function(encryptedProofStr){
-                var encryptedProofJson = encryptedProofStr;
-                // check if we got a valid proof
-                if (result[3].length > 0)
-                {
-                    proofs.push({
-                        "tracking_id" : trackingId,
-                        "owner" : result[0],
-                        "encrypted_proof" : encryptedProofJson,
-                        "public_proof" : result[2].length > 0 ? JSON.parse(result[2]) : result[2],
-                        "previous_tracking_id" : result[3]
-                    });
-                    var previousTrackingId =  result[3];
-                    if ((previousTrackingId != "root" ) && (previousTrackingId != "")) {
-                        callGetProof(previousTrackingId, decrypt, proofs, next)
-                    }
-                    else {
-                        return next(proofs);
-                    }
-                }
-                else {
-                    return next(null);
-                }
-            }
-            if (decrypt == "true") {
-                key.decrypt(userId, trackingId, result[1], function(decrypted) {
-                    // ensure we always return a valid json, even if we get back a string
-                    var decryptedJson = { raw_content : decrypted};
-                    try {
-                        decryptedJson = JSON.parse(decrypted);
-                    }
-                    catch(ex){
-                        
-                    };
-                    pushProof(decryptedJson);     
-                }); 
-            }
-            else {
-                pushProof(result[1]);
-            }
-        }
-        else {
-            return next(null);
-        }
-    });
-}
+async function getProof(opts) {
+  console.log(`[services/proof:getProof] opts: ${util.inspect(opts)}`);
+  
+  if (!opts.trackingId) throw new Error(`missing argument 'trackingId'`);
 
-function createProof(proof, next){
-    key.createKeyIfNotExist(userId, proof.tracking_id, function(keyValue){
-        var proofToEncryptStr = JSON.stringify(proof.proof_to_encrypt);
-        var hash = sha256(proofToEncryptStr);
-        proof.public_proof = JSON.stringify({
-            encrypted_proof_hash : hash.toUpperCase(),
-            public_proof : proof.public_proof
-        });
-        proof.encrypted_proof = key.encrypt(keyValue, proofToEncryptStr);
-        return next(proof);
-    });
-}
-module.exports = {
-    getProof: function (trackingId, decrypt, next) {
-        var proofs = [];
-        callGetProof(trackingId, decrypt, proofs, next);
-    },
-    startTracking: function(proof, next) {
-         createProof(proof, function(proof) {
-            contractInstance.startTracking(proof.tracking_id, proof.encrypted_proof, proof.public_proof, {from: account, gas : 2000000}, function(error, result){
-                if (!error) {
-                    return next(JSON.stringify(result));
-                }
-                else {
-                    return next(error);
-                }
-            });
-        });
-    },
-    storeProof: function(proof, next) {
-        createProof(proof, function(proof) {
-            contractInstance.storeProof(proof.tracking_id, proof.previous_tracking_id, proof.encrypted_proof, proof.public_proof, {from: account, gas : 2000000}, function(error, result){
-                if (!error) {
-                    return next(result);
-                }
-                else {
-                    return next(error);
-                }
-            });
-        });
-    },
-    transfer: function(transfer, next) {
-        contractInstance.transfer(transfer.tracking_id, transfer.transfer_to, {from: account, gas : 2000000}, function(error, result){
-            if (!error) {
-                return next(result);
-            }
-            else {
-                return next(error);
-            }
-        });
+  var trackingId = opts.trackingId;
+  var decrypt = opts.decrypt;
+  var proofs = [];
+
+  while (trackingId && trackingId != "root") {
+
+    var result = await contract.getProof(trackingId);
+    if (!result) return null;
+
+    // TODO wrap getProof and return null if doesn't exists
+    var proof;
+
+    if (!decrypt) {
+      proof = result.encryptedProof;
     }
+    else {
+      var decrypted = await key.decrypt(userId, trackingId, result.encryptedProof);
+
+      // ensure we always return a valid json, even if we get back a string
+      var decryptedJson = { rawContent : decrypted};
+
+      try {
+        decryptedJson = JSON.parse(decrypted);
+      }
+      catch(err) {
+        console.warn(`invalid decrypted json: ${decrypted}: ${err.message}`);
+      };
+
+      proof = decryptedJson;     
+    }
+
+    // check if we got a valid proof
+    if (result.previousTrackingId) {
+      proofs.push({
+        trackingId: trackingId,
+        owner: result.owner,
+        encryptedProof: proof,
+        publicProof: result.publicProof ? JSON.parse(result.publicProof) : result.publicProof,
+        previousTrackingId: result.previousTrackingId
+      });
+
+      trackingId = result.previousTrackingId;
+    }
+  }
+  
+  return proofs;
+}
+
+
+async function storeProof(opts) {
+  console.log(`[services/proof:storeProof] proof: ${util.inspect(opts)}`);
+    
+  if (!opts.trackingId) throw new Error(`missing argument 'trackingId'`);
+  if (!opts.publicProof) throw new Error(`missing argument 'publicProof'`);
+  if (!opts.proofToEncrypt) throw new Error(`missing argument 'proofToEncrypt'`);
+
+  opts.previousTrackingId = opts.previousTrackingId || "root";
+
+  var proofToEncryptStr = JSON.stringify(opts.proofToEncrypt);
+  var hash = sha256(proofToEncryptStr);
+
+  var publicProof = JSON.stringify({
+    encryptedProofHash : hash.toUpperCase(),
+    publicProof : opts.publicProof
+  });
+
+  var encryptedProof = await key.encrypt(userId, opts.trackingId, proofToEncryptStr);
+
+  var result = await contract.storeProof({
+    trackingId: opts.trackingId, 
+    previousTrackinId: opts.previousTrackingId, 
+    encryptedProof: encryptedProof, 
+    publicProof: publicProof,
+    config: { 
+      from: config.ACCOUNT_ADDRESS, 
+      password: config.ACCOUNT_PASSWORD,
+      gas : config.GAS 
+    }
+  });
+
+  console.log(`returning storeProof result: ${util.inspect(result)}`);
+  return result;
+}
+
+
+async function transfer(opts) {
+  // TODO: add input validation as implemented in above functions
+
+  var result = await contract.transfer({
+    trackingId: opts.trackingId, 
+    transferTo: opts.transferTo, 
+    config: { from: config.ACCOUNT_ADDRESS, gas : config.GAS }
+  });
+
+  return result;  
+}
+
+
+module.exports = {
+  getProof,
+  storeProof,
+  transfer
 }

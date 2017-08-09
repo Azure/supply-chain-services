@@ -1,5 +1,6 @@
-#configuration
-config.json
+
+# remove private configuration
+*.private.json
 
 # Logs
 logs
