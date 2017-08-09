@@ -12,6 +12,7 @@ var app = express();
 
 app.get('/:trackingId', async (req, res) => {
 
+  debugger;
   req.checkParams('trackingId', 'Invalid trackingId').notEmpty();
   var errors = await req.getValidationResult();
   if (!errors.isEmpty()) {

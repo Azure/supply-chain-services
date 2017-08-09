@@ -66,3 +66,9 @@ else {
 		console.info(`server is listening on port ${port}`);
 	});
 }
+
+process.on('uncaughtException', err => {
+	console.error(`uncaught exception: ${err.message}`);
+	setTimeout(() =>  process.exit(1), 1000);
+});
+
