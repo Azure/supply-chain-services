@@ -12,7 +12,6 @@ var app = express();
 
 app.get('/:trackingId', async (req, res) => {
 
-  debugger;
   req.checkParams('trackingId', 'Invalid trackingId').notEmpty();
   var errors = await req.getValidationResult();
   if (!errors.isEmpty()) {
@@ -20,7 +19,21 @@ app.get('/:trackingId', async (req, res) => {
   }
 
   var trackingId = decodeURIComponent(req.params.trackingId.trim());
+  await getProof(trackingId, req, res);
+});
 
+app.post('/get', async (req, res) => {
+
+  if (!req.body.trackingId) {
+    return res.status(HttpStatus.BAD_REQUEST).json({ error: `trackingId was not provided` });
+  }
+
+  var trackingId = req.body.trackingId;
+  await getProof(trackingId, req, res);
+});
+
+async function getProof(trackingId, req, res) {
+  
   var opts = { 
     trackingId, 
     decrypt: req.sanitizeQuery('decrypt').toBoolean()
@@ -43,8 +56,7 @@ app.get('/:trackingId', async (req, res) => {
 
   console.log(`sending result: ${util.inspect(result)}`);
   return res.json(result);
-});
-
+}
 
 app.put('/', async (req, res) => {
   if (!validate(req.body, scehma.proof.put).valid) {
