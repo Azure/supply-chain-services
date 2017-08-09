@@ -76,33 +76,29 @@ var client = {};
     }
 });
 
-var web3Personal = {};
 
-[
-  'unlockAccount',
-  'lockAccount'
-].forEach(func => {
-  web3Personal[func] = async function() {
-    return new Promise((resolve, reject) => {
+// generic function to wrap async functions with a Promise to use with the async/await pattern
+async function callAsyncFunc(obj, func) {
+   return new Promise((resolve, reject) => {
+    
+    // callback for the function invoked
+    var cb = (err, result) => {
+      if (err) {
+        console.error(`error executing function '${func}' with params: ${util.inspect(arguments)}: ${err.message}`);
+        return reject(err);
+      }
+      
+      console.log(`function '${func}' completed successfully with result: ${util.inspect(result)}`);
+      return resolve({ result });
+    };
 
-      // callback for the function invoked
-      var cb = (err, result) => {
-        if (err) {
-          console.error(`error executing function '${func}' on contract with params: ${util.inspect(arguments)}: ${err.message}`);
-          return reject(err);
-        }
-        
-        console.log(`function '${func}' on contract completed successfully with result: ${util.inspect(result)}`);
-        return resolve(result);
-      };
+    var params = Array.prototype.slice.call(arguments, 2);
+    params.push(cb);
 
-      var params = Array.prototype.slice.call(arguments);
-      params.push(cb);
+    return obj[func].apply(obj, params);
+  });
+}
 
-      return web3.personal[func].apply(web3.personal, params);
-    });
-  }
-});
 
 var api = {
   getProof: async (trackingId) => {
@@ -131,25 +127,35 @@ var api = {
 
   storeProof: async (opts) => {
     try {
-      var unlockRes = await web3Personal.unlockAccount(opts.config.from, opts.config.password);
-      if (!unlockRes) {
+      var unlockRes = await callAsyncFunc(web3.personal, 'unlockAccount', opts.config.from, opts.config.password);
+      if (!unlockRes.result) {
         throw new Error(`error unlocking account: ${opts.config.from}`);
       }
-      console.log(`getting gas price`);
-      var storeProofPrice = await client.storeProofGetPrice(opts.trackingId, opts.previousTrackinId, opts.encryptedProof, opts.publicProof, opts.config);
       
-      opts.config.gas = storeProofPrice.price * 2;
+      // get balance
+      var balanceRes = await callAsyncFunc(web3.eth, 'getBalance', opts.config.from);
+      var balanceInWei = balanceRes.result;
+ 
+      //getting gas price
+      var storeProofPrice = await client.storeProofGetPrice(opts.trackingId, opts.previousTrackinId, opts.encryptedProof, opts.publicProof, opts.config);
+      var priceInWei = storeProofPrice.price;
+
+      if (balanceInWei.lessThan(priceInWei)) {
+        throw new Error(`current balance (${balanceInWei} wei) is lower than the estimate cost for the request (${priceInWei} wei). stopping request`);
+      }
+
+      opts.config.gas = priceInWei;
       console.log(`got gas price: ${storeProofPrice.price}, paying ${opts.config.gas}`);
       var res = await client.storeProof(opts.trackingId, opts.previousTrackinId, opts.encryptedProof, opts.publicProof, opts.config);
-      /*
-      var lockRes = await web3Personal.lockAccount(opts.config.from, opts.config.password);
+      
+      var lockRes = await callAsyncFunc(web3.personal, 'lockAccount', opts.config.from, opts.config.password);
       if (!lockRes) {
         throw new Error(`error locking account: ${opts.config.from}`);
       }
-      */
+      
     }
     catch(err) {
-      console.error(`error getting proof from blockchain: ${err.message}`);
+      console.error(`error storing proof in blockchain: ${err.message}`);
       throw err;
     }
 
@@ -180,10 +186,8 @@ var api = {
     }
 
     return res;
-  },
-
-  web3,
-  web3Personal
+  }
+  
 };
 
 module.exports = api;
