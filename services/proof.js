@@ -107,7 +107,11 @@ async function transfer(opts) {
   var result = await contract.transfer({
     trackingId: opts.trackingId, 
     transferTo: opts.transferTo, 
-    config: { from: config.ACCOUNT_ADDRESS, gas : config.GAS }
+    config: { 
+      from: config.ACCOUNT_ADDRESS, 
+      password: config.ACCOUNT_PASSWORD,
+      gas : config.GAS 
+    }
   });
 
   return result;  

@@ -30,52 +30,79 @@ var client = {};
       });
     }
 
-    client[func.name] = function() {
-      return new Promise((resolve, reject) => {
-        console.log(`executing function '${func.name}' with '${func.method}' call on contract with params ${util.inspect(arguments)}`);
+    client[func.name] = callContractFunc();
+    client[`${func.name}GetPrice`] = callContractFunc(true);
+    
+    function callContractFunc(getPrice) {
+      return function() {
+        var args = arguments;
+        return new Promise((resolve, reject) => {
+          console.log(`executing function '${func.name}' with '${func.method}' call on contract with params ${util.inspect(args)}`);
 
-        // callback for the function invoked
-        var cb = (err, result) => {
-          if (err) {
-            console.error(`error executing function '${func.name}' on contract with params: ${util.inspect(arguments)}: ${err.message}`);
-            return reject(err);
-          }
-          
-          console.log(`function '${func.name}' on contract completed successfully`);
+          // callback for the function invoked
+          var cb = (err, result) => {
+            if (err) {
+              console.error(`error executing function '${func.name}' on contract with params: ${util.inspect(args)}: ${err.message}`);
+              return reject(err);
+            }
+            
+            console.log(`function '${func.name}' on contract completed successfully`);
 
-          // wrap tx hash in an object
-          if (func.method === 'sendTransaction') {
-            console.log(`tx hash: ${result}`);
-            result = { txHash: result };
-          }
+            if (getPrice) {
+              return resolve({ price: result });
+            }
 
-          return resolve(result);
-        };
+            // wrap tx hash in an object
+            if (func.method === 'sendTransaction') {
+              console.log(`tx hash: ${result}`);
+              result = { txHash: result };
+            }
 
-        // extract original params and add the callback to the list
-        var params = Array.prototype.slice.call(arguments);
-        params.push(cb);
+            return resolve(result);
+          };
 
-        // invoke requested method on the contract
-        // https://ethereum.stackexchange.com/questions/765/what-is-the-difference-between-a-transaction-and-a-call
-        // TODO: in case of sendTransaction, we need to use Events to get the actual result after the transaction is mined
-        // when using 'call' the result will be returned immediately. This is only for contant functions or such that do not change the state.
-        return contractInstance[func.name][func.method].apply(contractInstance, params);
-      });
+          // extract original params and add the callback to the list
+          var params = Array.prototype.slice.call(args);
+          params.push(cb);
+
+          // invoke requested method on the contract
+          // https://ethereum.stackexchange.com/questions/765/what-is-the-difference-between-a-transaction-and-a-call
+          // TODO: in case of sendTransaction, we need to use Events to get the actual result after the transaction is mined
+          // when using 'call' the result will be returned immediately. This is only for contant functions or such that do not change the state.
+          var method = getPrice ? 'estimateGas' : func.method;
+          return contractInstance[func.name][method].apply(contractInstance, params);
+        });
+      }
     }
 });
 
-async function unlockAccount(address, passwd) {
-  return new Promise((resolve, reject) => {
-    web3.personal.unlockAccount(address, passwd, (err, res) => {
-      if (err) {
-        console.error(`error unlocking account from blockchain: ${err.message}`)
-        return reject(err);
-      }
-      return resolve(res);
+var web3Personal = {};
+
+[
+  'unlockAccount',
+  'lockAccount'
+].forEach(func => {
+  web3Personal[func] = async function() {
+    return new Promise((resolve, reject) => {
+
+      // callback for the function invoked
+      var cb = (err, result) => {
+        if (err) {
+          console.error(`error executing function '${func}' on contract with params: ${util.inspect(arguments)}: ${err.message}`);
+          return reject(err);
+        }
+        
+        console.log(`function '${func}' on contract completed successfully with result: ${util.inspect(result)}`);
+        return resolve(result);
+      };
+
+      var params = Array.prototype.slice.call(arguments);
+      params.push(cb);
+
+      return web3.personal[func].apply(web3.personal, params);
     });
-  });
-}
+  }
+});
 
 var api = {
   getProof: async (trackingId) => {
@@ -104,8 +131,19 @@ var api = {
 
   storeProof: async (opts) => {
     try {
-      var unlockRes = await unlockAccount(opts.config.from, opts.config.password);
+      var unlockRes = await web3Personal.unlockAccount(opts.config.from, opts.config.password);
+      if (!unlockRes) {
+        throw new Error(`error unlocking account: ${opts.config.from}`);
+      }
+      
+      var storeProofPrice = await client.storeProofGetPrice(opts.trackingId, opts.previousTrackinId, opts.encryptedProof, opts.publicProof, opts.config);
+      opts.config.gas = storeProofPrice.price;
       var res = await client.storeProof(opts.trackingId, opts.previousTrackinId, opts.encryptedProof, opts.publicProof, opts.config);
+      
+      var lockRes = await web3Personal.lockAccount(opts.config.from, opts.config.password);
+      if (!lockRes) {
+        throw new Error(`error locking account: ${opts.config.from}`);
+      }
     }
     catch(err) {
       console.error(`error getting proof from blockchain: ${err.message}`);
@@ -118,7 +156,20 @@ var api = {
 
   transfer: async (opts) => {
     try {
+      var unlockRes = await web3Personal.unlockAccount(opts.config.from, opts.config.password);
+      if (!unlockRes) {
+        throw new Error(`error unlocking account: ${opts.config.from}`);
+      }
+      
+      var transferPrice = await client.transferGetPrice(opts.trackingId, opts.transferTo,  opts.config);
+      opts.config.gas = transferPrice.price;
+
       var res = await client.transfer(opts.trackingId, opts.transferTo,  opts.config);
+
+      var lockRes = await web3Personal.lockAccount(opts.config.from, opts.config.password);
+      if (!lockRes) {
+        throw new Error(`error locking account: ${opts.config.from}`);
+      }
     }
     catch(err) {
       console.error(`error getting proof from blockchain: ${err.message}`);
@@ -128,7 +179,8 @@ var api = {
     return res;
   },
 
-  web3
+  web3,
+  web3Personal
 };
 
 module.exports = api;
