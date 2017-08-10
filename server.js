@@ -6,7 +6,7 @@ var https = require('https');
 var fs = require('fs');
 var express = require('express');
 var bodyParser = require('body-parser');
-//var cors = require('express-cors');
+var cors = require('express-cors');
 var expressValidator = require('express-validator');
 var HttpStatus = require('http-status-codes');
 
@@ -32,8 +32,7 @@ else {
   serverOptions.key = fs.readFileSync('./cert/server.key');
 }
 
-// Ask Beat if we need cors... not sure if we do
-//server.use(cors());
+app.use(cors());
 app.use(bodyParser.json());
 app.use(expressValidator());
 
