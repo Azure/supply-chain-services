@@ -2,7 +2,7 @@
 
 var sha256 = require('sha256');
 var util = require('util');
-
+var uuid = require('uuid');
 var key = require('./key');
 var contract = require('./contract');
 var config = require('../config');
@@ -68,10 +68,10 @@ async function getProof(opts) {
 async function storeProof(opts) {
   console.log(`[services/proof:storeProof] proof: ${util.inspect(opts)}`);
     
-  if (!opts.trackingId) throw new Error(`missing argument 'trackingId'`);
   if (!opts.publicProof) throw new Error(`missing argument 'publicProof'`);
   if (!opts.proofToEncrypt) throw new Error(`missing argument 'proofToEncrypt'`);
 
+  opts.trackingId = opts.trackingId || uuid.v4();
   opts.previousTrackingId = opts.previousTrackingId || "root";
 
   var proofToEncryptStr = JSON.stringify(opts.proofToEncrypt);
@@ -91,10 +91,11 @@ async function storeProof(opts) {
     publicProof: publicProof,
     config: { 
       from: config.ACCOUNT_ADDRESS, 
-      password: config.ACCOUNT_PASSWORD,
-      gas : config.GAS 
+      password: config.ACCOUNT_PASSWORD
     }
   });
+
+  result.trackingId = opts.trackingId;
 
   console.log(`returning storeProof result: ${util.inspect(result)}`);
   return result;
@@ -107,7 +108,11 @@ async function transfer(opts) {
   var result = await contract.transfer({
     trackingId: opts.trackingId, 
     transferTo: opts.transferTo, 
-    config: { from: config.ACCOUNT_ADDRESS, gas : config.GAS }
+    config: { 
+      from: config.ACCOUNT_ADDRESS, 
+      password: config.ACCOUNT_PASSWORD,
+      gas : config.GAS 
+    }
   });
 
   return result;  
