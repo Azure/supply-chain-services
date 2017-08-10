@@ -10,7 +10,7 @@
         "proofToEncrypt": { "type": "object" },
         "publicProof": { "type": "object" }
       },
-      "required": ["trackingId", "proofToEncrypt", "publicProof"]
+      "required": ["proofToEncrypt", "publicProof"]
     },
 
     "patch": {
