@@ -4,7 +4,7 @@ var util = require('util');
 var express = require('express');
 var HttpStatus = require('http-status-codes');
 var validate = require('jsonschema').validate;
-var scehma = require('./schema');
+var schema = require('./schema');
 var key = require('../services/key');
 
 const userId = "un-authenticated";
@@ -44,8 +44,8 @@ app.get('/:keyId', async (req, res) => {
 
 app.post('/', async (req, res) => {
 
-  if (!validate(req.body, scehma.key.post).valid) {
-    return res.status(HttpStatus.BAD_REQUEST).json({ error: `invalid schema - expected schema is ${util.inspect(scehma.key.post)}` });
+  if (!validate(req.body, schema.key.post).valid) {
+    return res.status(HttpStatus.BAD_REQUEST).json({ error: `invalid schema - expected schema is ${util.inspect(schema.key.post)}` });
   }
             
   try {
