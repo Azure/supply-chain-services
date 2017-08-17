@@ -9,6 +9,11 @@ var config = require('../config');
 web3.setProvider(new Web3.providers.HttpProvider(config.GET_RPC_ENDPOINT));
 var contractInstance = web3.eth.contract(abi).at(config.CONTRACT_ADDRESS);
 
+
+
+
+// TODO: remove all of this client code and use the callAsyncFunc instead
+
 var client = {};
 
 // wrap following functions with a promise so that we can use it with the async convention

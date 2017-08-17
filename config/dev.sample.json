@@ -4,5 +4,5 @@
    "ACCOUNT_PASSWORD": "Password12345",
    "GAS": 2000000,
    "GET_RPC_ENDPOINT" : "http://localhost:8545",
-   "AZURE_STORAGE_CONNECTION_STRING" : "DefaultEndpointsProtocol=https;AccountName=iberast;AccountKey=wgEMgLpUcHaaqMh7OKN1L1QQ/XrzuDhDHrIHUaoShpMHHZ40lrO7wXf4veBeDYm/DO/CY8969618k2QOUOT1Gg==;EndpointSuffix=core.windows.net"
+   "AZURE_STORAGE_CONNECTION_STRING" : "DefaultEndpointsProtocol=https;AccountName=iberast;AccountKey=wgEMgLpUcHaaqMh7OKN1L1QQ/XrzuDhDHrIdfaoShpMHHZ40lrO7wXf4veBeDYm/DO/CY8969618k2QOUOT1Gg==;EndpointSuffix=core.windows.net"
 }
