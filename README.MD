@@ -10,6 +10,7 @@ Fill in the following values:
 
 `CONTRACT_ADDRESS`: Your contract address, see details below
 `ACCOUNT_ADDRESS` : Your account address, see details below
+`USE_TESTRPC` : true if testRpc is used, otherwise false
 `GAS`: The default GAS value 
 `GET_RPC_ENDPOINT` : The RPC endpoint
 `AZURE_STORAGE_CONNECTION_STRING`- A connection string to your Azure Storage Account where we keep the keys to encrypt and decrypt the proofs

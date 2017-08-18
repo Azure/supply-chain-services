@@ -8,6 +8,7 @@ var config = require('../config');
 
 web3.setProvider(new Web3.providers.HttpProvider(config.GET_RPC_ENDPOINT));
 var contractInstance = web3.eth.contract(abi).at(config.CONTRACT_ADDRESS);
+var useTestRpc = config.USE_TESTRPC;
 
 var client = {};
 
@@ -99,6 +100,22 @@ async function callAsyncFunc(obj, func) {
   });
 }
 
+async function unlockCallFuncLock(opts, func){
+   if (useTestRpc != `true`) {
+		var unlockRes = await callAsyncFunc(web3.personal, 'unlockAccount', opts.config.from, opts.config.password);
+		if (!unlockRes.result) {
+			throw new Error(`error unlocking account: ${opts.config.from}`);
+		}
+	}
+   var res = func();
+   if (useTestRpc != `true`) {
+		var lockRes = await callAsyncFunc(web3.personal, 'lockAccount', opts.config.from, opts.config.password);
+		if (!lockRes) {
+			throw new Error(`error locking account: ${opts.config.from}`);
+		}
+	}
+   return res;
+}
 
 var api = {
   getProof: async (trackingId) => {
@@ -126,33 +143,25 @@ var api = {
   },
 
   storeProof: async (opts) => {
+    var res;
     try {
-      var unlockRes = await callAsyncFunc(web3.personal, 'unlockAccount', opts.config.from, opts.config.password);
-      if (!unlockRes.result) {
-        throw new Error(`error unlocking account: ${opts.config.from}`);
-      }
-      
-      // get balance
-      var balanceRes = await callAsyncFunc(web3.eth, 'getBalance', opts.config.from);
-      var balanceInWei = balanceRes.result;
- 
-      //getting gas price
-      var storeProofPrice = await client.storeProofGetPrice(opts.trackingId, opts.previousTrackinId, opts.encryptedProof, opts.publicProof, opts.config);
-      var priceInWei = storeProofPrice.price;
+         res = await unlockCallFuncLock(opts, async () => {
+          // get balance
+          var balanceRes = await callAsyncFunc(web3.eth, 'getBalance', opts.config.from);
+          var balanceInWei = balanceRes.result;
+    
+          //getting gas price
+          var storeProofPrice = await client.storeProofGetPrice(opts.trackingId, opts.previousTrackinId, opts.encryptedProof, opts.publicProof, opts.config);
+          var priceInWei = storeProofPrice.price;
 
-      if (balanceInWei.lessThan(priceInWei)) {
-        throw new Error(`current balance (${balanceInWei} wei) is lower than the estimate cost for the request (${priceInWei} wei). stopping request`);
-      }
+          if (balanceInWei.lessThan(priceInWei)) {
+              throw new Error(`current balance (${balanceInWei} wei) is lower than the estimate cost for the request (${priceInWei} wei). stopping request`);
+          }
 
-      opts.config.gas = priceInWei;
-      console.log(`got gas price: ${storeProofPrice.price}, paying ${opts.config.gas}`);
-      var res = await client.storeProof(opts.trackingId, opts.previousTrackinId, opts.encryptedProof, opts.publicProof, opts.config);
-      
-      var lockRes = await callAsyncFunc(web3.personal, 'lockAccount', opts.config.from, opts.config.password);
-      if (!lockRes) {
-        throw new Error(`error locking account: ${opts.config.from}`);
-      }
-      
+          opts.config.gas = priceInWei;
+          console.log(`got gas price: ${storeProofPrice.price}, paying ${opts.config.gas}`);
+          return await client.storeProof(opts.trackingId, opts.previousTrackinId, opts.encryptedProof, opts.publicProof, opts.config);
+        });
     }
     catch(err) {
       console.error(`error storing proof in blockchain: ${err.message}`);
@@ -164,28 +173,21 @@ var api = {
 
 
   transfer: async (opts) => {
-    try {
-      var unlockRes = await web3Personal.unlockAccount(opts.config.from, opts.config.password);
-      if (!unlockRes) {
-        throw new Error(`error unlocking account: ${opts.config.from}`);
-      }
-      
-      var transferPrice = await client.transferGetPrice(opts.trackingId, opts.transferTo,  opts.config);
-      opts.config.gas = transferPrice.price;
+	  	var res;
+		try {
+				res = await unlockCallFuncLock(opts, async () => {
+					var transferPrice = await client.transferGetPrice(opts.trackingId, opts.transferTo,  opts.config);
+					opts.config.gas = transferPrice.price;
 
-      var res = await client.transfer(opts.trackingId, opts.transferTo,  opts.config);
+					return await client.transfer(opts.trackingId, opts.transferTo,  opts.config);
+				});
+		}
+		catch(err) {
+			console.error(`error getting proof from blockchain: ${err.message}`);
+			throw err;
+		}
 
-      var lockRes = await web3Personal.lockAccount(opts.config.from, opts.config.password);
-      if (!lockRes) {
-        throw new Error(`error locking account: ${opts.config.from}`);
-      }
-    }
-    catch(err) {
-      console.error(`error getting proof from blockchain: ${err.message}`);
-      throw err;
-    }
-
-    return res;
+		return res;
   }
   
 };
