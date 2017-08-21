@@ -24,7 +24,7 @@ var events = abi
 });
 
 // genertic function to unlock the account before invoking a 
-// 'sendTransaction' type call on the contract, and then unlock the account  
+// 'sendTransaction' type call on the contract, and then lock the account  
 async function callSendTransactionApi(asyncFunc, config) {
   try {
 
@@ -111,7 +111,7 @@ async function getProof(trackingId) {
     console.error(`error getting proof from blockchain: ${err.message}`);
     throw err;
   }
-  
+
   var res = getProofRequest.result;
 
   res = {
