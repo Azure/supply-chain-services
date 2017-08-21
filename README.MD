@@ -55,6 +55,7 @@ The following request adds a new proof to the chain:
 ```json
 {
   "trackingId" : "trackingId_1",
+  "userId" : "producer_01",
   "encryptedProof": {
     "proof": "This content will be encrypted before storing"
   },
@@ -73,6 +74,7 @@ The following request adds a new proof that is chained to the previous one:
 ```json
 {
   "trackingId" : "trackingId_2",
+  "userId" : "producer_02",
   "previousTrackingId": "trackingId_1",
   "encryptedProof": {
     "proof": "This content will be encrypted before storing"
@@ -98,7 +100,7 @@ The following request adds a new proof that is chained to the previous one:
 
 ## GET
 `GET` retrieves a proof and all it's previous proofs and returns it as an array. The `trackingId` should be provided as part of the URL parameters.
-After performing the above `PUT` a `GET` on `/api/proof/trackingId_1?decrypt=0` returns the following json: 
+After performing the above `PUT` a `GET` on `/api/proof/trackingId_1?userId=producer_01&decrypt=0` returns the following json: 
 
 ```json
 [
@@ -118,7 +120,7 @@ After performing the above `PUT` a `GET` on `/api/proof/trackingId_1?decrypt=0` 
 ]
 ```
 
-A `GET` on `/api/proof/trackingId_1?decrypt=1` returns the `encryptedProof` decrypted. 
+A `GET` on `/api/proof/trackingId_1?userId=producer_01&decrypt=1` returns the `encryptedProof` decrypted. 
 **Note**: Decryption will only take place if the caller has access to the private key. 
 
 ```json
@@ -182,13 +184,14 @@ PUT creates a new key with the provided `keyId` and returns the HTTP status code
 
 ```json
 {
-  "keyId" : "trackingId_1"
+  "keyId" : "trackingId_1",
+  "userId" : "producer_01"
 }
 ```
 
 ## GET
 The `keyId` provided as part of the URL parameters. The api only returns the public but never the private key.
-A call to `/api/key?keyId=trackingId_1` returns 
+A call to `/api/key?keyId=trackingId_1&userId=producer_01` returns 
 
 ```json
 {

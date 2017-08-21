@@ -7,17 +7,19 @@ var key = require('./key');
 var contract = require('./contract');
 var config = require('../config');
 
-// TODO move userId to options object in each API
-const userId = "un-authenticated";
-
-
+function makeValidUserId(userId){
+  // TODO: need to validate the user id for invalid characters
+  return userId;
+}
 async function getProof(opts) {
   console.log(`[services/proof:getProof] opts: ${util.inspect(opts)}`);
   
   if (!opts.trackingId) throw new Error(`missing argument 'trackingId'`);
+  if (!opts.userId) throw new Error(`missing argument 'userId'`);
 
   var trackingId = opts.trackingId;
   var decrypt = opts.decrypt;
+  var userId = makeValidUserId(opts.userId);
   var proofs = [];
 
   while (trackingId && trackingId != "root") {
@@ -70,10 +72,12 @@ async function storeProof(opts) {
     
   if (!opts.publicProof) throw new Error(`missing argument 'publicProof'`);
   if (!opts.proofToEncrypt) throw new Error(`missing argument 'proofToEncrypt'`);
+  if (!opts.userId) throw new Error(`missing argument 'userId'`);
 
   opts.trackingId = opts.trackingId || uuid.v4();
   opts.previousTrackingId = opts.previousTrackingId || "root";
 
+  var userId = makeValidUserId(opts.userId);
   var proofToEncryptStr = JSON.stringify(opts.proofToEncrypt);
   var hash = sha256(proofToEncryptStr);
 

@@ -7,8 +7,6 @@ var validate = require('jsonschema').validate;
 var schema = require('./schema');
 var key = require('../services/key');
 
-const userId = "un-authenticated";
-
 var app = express();
 
 // TODO: test below APIs
@@ -17,12 +15,15 @@ var app = express();
 app.get('/:keyId', async (req, res) => {
 
   req.checkParams('keyId', 'Invalid keyId').notEmpty();
+  req.checkQuery('userId', 'Invalid userId').notEmpty();
+
   var errors = await req.getValidationResult();
   if (!errors.isEmpty()) {
     return res.status(HttpStatus.BAD_REQUEST).json({ error: `there have been validation errors: ${util.inspect(errors.array())}` });
   }
 
   var keyId = decodeURIComponent(req.params.keyId);
+  var userId = decodeURIComponent(req.query.userId);
 
   try {
     var result = await key.getPublicKey(userId, keyId);
@@ -47,7 +48,7 @@ app.post('/', async (req, res) => {
   if (!validate(req.body, schema.key.post).valid) {
     return res.status(HttpStatus.BAD_REQUEST).json({ error: `invalid schema - expected schema is ${util.inspect(schema.key.post)}` });
   }
-            
+  var userId = req.body.userId;         
   try {
     var result = await key.createKey(userId, req.body.keyId);
   }
