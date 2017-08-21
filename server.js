@@ -11,13 +11,13 @@ var expressValidator = require('express-validator');
 var HttpStatus = require('http-status-codes');
 
 var api = require('./api');
+var utils = require('./utils');
 
 var port = process.env.PORT || 443;
-var isProd = process.env.NODE_ENV === 'production';
 var app = express();
 var serverOptions = {};
 
-if (isProd) {
+if (utils.isProd) {
 
 	// in prod, enforce secured connections
 	app.use((req, res, next) => {
@@ -49,7 +49,7 @@ app.get('/', (req, res) => {
 	return res.end(`iBera Service in on...`);
 });
 
-if (isProd) {
+if (utils.isProd) {
 	// in prod we will use Azure's certificate to use ssl.
 	// so no need to use https here with a custom certificate for now.
 	// enforcing https in prod is being done on the first middleware (see above)
