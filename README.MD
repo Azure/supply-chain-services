@@ -66,6 +66,15 @@ The following request adds a new proof to the chain:
 }
 ```
 
+The `trackingId` is optional. If it wasn't provided by the caller, a new GUID will be generated and will be returned as part of the response:
+
+```json
+{
+  "trackingId" : "<the tracking Id>",
+  "txHash": "<the transaction hash in the blockchain>"
+}
+```
+
 In order to create a proof that is chained to a previous already-existing proof, add the `previousTrackingId` field.
 **Note**: This will only work if the `previousTrackingId` proof is owned by the calling account, or if it has been transfered to the executing account using the `PATCH` method as demonstrated below.
 

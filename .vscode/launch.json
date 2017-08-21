@@ -11,7 +11,10 @@
       "program": "${workspaceRoot}\\server",
       "outFiles": [
         "${workspaceRoot}/out/**/*.js"
-      ]
+      ],
+      "env": {
+        "NODE_ENV1": "testRpc"
+      }
     }
   ]
 }
