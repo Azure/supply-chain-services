@@ -23,7 +23,7 @@ var events = abi
     });
 });
 
-// genertic function to unlock the account before invoking a 
+// generic function to unlock the account before invoking a 
 // 'sendTransaction' type call on the contract, and then lock the account  
 async function callSendTransactionApi(asyncFunc, config) {
   try {
