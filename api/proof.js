@@ -4,7 +4,7 @@ var util = require('util');
 var express = require('express');
 var HttpStatus = require('http-status-codes');
 var validate = require('jsonschema').validate;
-var scehma = require('./schema');
+var schema = require('./schema');
 var proof = require('../services/proof');
 
 var app = express();
@@ -13,16 +13,20 @@ var app = express();
 app.get('/:trackingId', async (req, res) => {
 
   req.checkParams('trackingId', 'Invalid trackingId').notEmpty();
+  req.checkQuery('userId', 'Invalid userId').notEmpty();
+
   var errors = await req.getValidationResult();
   if (!errors.isEmpty()) {
     return res.status(HttpStatus.BAD_REQUEST).json({ error: `there have been validation errors: ${util.inspect(errors.array())}` });
   }
 
   var trackingId = decodeURIComponent(req.params.trackingId);
+  var userId = decodeURIComponent(req.query.userId);
   
   var opts = { 
     trackingId, 
-    decrypt: req.sanitizeQuery('decrypt').toBoolean()
+    decrypt: req.sanitizeQuery('decrypt').toBoolean(),
+    userId
   };
 
   console.log(`getting proof for ${util.inspect(opts)}`);
@@ -46,10 +50,9 @@ app.get('/:trackingId', async (req, res) => {
 
 
 app.put('/', async (req, res) => {
-  if (!validate(req.body, scehma.proof.put).valid) {
-    return res.status(HttpStatus.BAD_REQUEST).json({ error: `invalid schema - expected schema is ${util.inspect(scehma.proof.put)}` });
+  if (!validate(req.body, schema.proof.put).valid) {
+    return res.status(HttpStatus.BAD_REQUEST).json({ error: `invalid schema - expected schema is ${util.inspect(schema.proof.put)}` });
   }
-    
   try {
     var result = await proof.storeProof(req.body);   
   }
@@ -64,8 +67,8 @@ app.put('/', async (req, res) => {
 
 
 app.patch('/', async (req, res) => {
-  if (!validate(req.body, scehma.proof.patch).valid) {
-    return res.status(HttpStatus.BAD_REQUEST).json({ error: `invalid schema - expected schema is ${util.inspect(scehma.proof.patch)}` });
+  if (!validate(req.body, schema.proof.patch).valid) {
+    return res.status(HttpStatus.BAD_REQUEST).json({ error: `invalid schema - expected schema is ${util.inspect(schema.proof.patch)}` });
   }
   
   try {
