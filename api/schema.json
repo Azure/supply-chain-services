@@ -8,9 +8,10 @@
         "trackingId": { "type": "string" },
         "previousTrackingId" : { "type" : "string" },
         "proofToEncrypt": { "type": "object" },
-        "publicProof": { "type": "object" }
+        "publicProof": { "type": "object" },
+        "userId": { "userId": "string"}
       },
-      "required": ["proofToEncrypt", "publicProof"]
+      "required": ["proofToEncrypt", "publicProof", "userId"]
     },
 
     "patch": {
@@ -29,9 +30,10 @@
       "id": "/ProofPost",
       "type": "object",
       "properties": {
-          "keyId": { "type": "string" }
+          "keyId": { "type": "string" },
+          "userId": { "type": "string" }
       },
-      "required": ["keyId"]
+      "required": ["keyId", "userId"]
     }
   }
 }
