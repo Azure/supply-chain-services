@@ -23,39 +23,39 @@ var events = abi
     });
 });
 
-// genertic function to unlock the account before invoking a 
+// generic function to unlock the account before invoking a 
 // 'sendTransaction' type call on the contract, and then lock the account  
 async function callSendTransactionApi(asyncFunc, config) {
   try {
 
-      if (!utils.isTestRpc) {
-        var unlockRes = await callAsyncFunc(web3.personal, 'unlockAccount', config.from, config.password);
-        if (!unlockRes.result) {
-          throw new Error(`error unlocking account: ${config.from}`);
-        }
+    if (!utils.isTestRpc) {
+      var unlockRes = await callAsyncFunc(web3.personal, 'unlockAccount', config.from, config.password);
+      if (!unlockRes.result) {
+        throw new Error(`error unlocking account: ${config.from}`);
       }
+    }
+  
+    // get balance
+    var balanceRes = await callAsyncFunc(web3.eth, 'getBalance', config.from);
+    var balanceInWei = balanceRes.result;
+
+    // call the actual function
+    var funcResult = await asyncFunc(balanceInWei);
     
-      // get balance
-      var balanceRes = await callAsyncFunc(web3.eth, 'getBalance', config.from);
-      var balanceInWei = balanceRes.result;
- 
-      // call the actual function
-      var funcResult = await asyncFunc(balanceInWei);
-      
-      if (!utils.isTestRpc) {
-        var lockRes = await callAsyncFunc(web3.personal, 'lockAccount', config.from, config.password);
-        if (!lockRes) {
-          throw new Error(`error locking account: ${config.from}`);
-        }
+    if (!utils.isTestRpc) {
+      var lockRes = await callAsyncFunc(web3.personal, 'lockAccount', config.from, config.password);
+      if (!lockRes) {
+        throw new Error(`error locking account: ${config.from}`);
       }
-
-    }
-    catch(err) {
-      console.error(`error storing proof in blockchain: ${err.message}`);
-      throw err;
     }
 
-    return funcResult;
+  }
+  catch(err) {
+    console.error(`error invoking a callSendTransactionApi: ${err.message}`);
+    throw err;
+  }
+
+  return funcResult;
 }
 
 // store proof
@@ -75,6 +75,7 @@ async function storeProof(opts) {
 
     opts.config.gas = priceInWei;
     return await callAsyncFunc(contractInstance.storeProof, 'sendTransaction', opts.trackingId, opts.previousTrackinId, opts.encryptedProof, opts.publicProof, opts.config);
+
   }, opts.config);
 
   return { txHash: apiRequest.result };
@@ -97,6 +98,7 @@ async function transfer(opts) {
 
     opts.config.gas = priceInWei;
     return await callAsyncFunc(contractInstance.transfer, 'sendTransaction', opts.trackingId, opts.transferTo,  opts.config);
+    
   }, opts.config);
 
   return { txHash: apiRequest.result };
