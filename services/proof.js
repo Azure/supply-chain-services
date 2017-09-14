@@ -69,7 +69,7 @@ async function getProof(opts) {
     }
   }
   
-  return proofs;
+  return { proofs };
 }
 
 
