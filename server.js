@@ -27,7 +27,11 @@ if (utils.isProd) {
 		return next();
 	});
 }
-else {  
+else { // dev
+	 
+	// accept self-signed cdertificates only in development
+	process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 	serverOptions.cert = fs.readFileSync('./cert/server.crt');
   serverOptions.key = fs.readFileSync('./cert/server.key');
 }

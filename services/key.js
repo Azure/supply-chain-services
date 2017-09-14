@@ -98,6 +98,10 @@ async function encrypt(userId, keyId, content) {
 async function decrypt(userId, keyId, content) {
   var rsa = new nodeRSA(); 
   var res = await readEntity(keyTableName, userId, keyId);
+  if (!res) {
+    console.warn(`error getting key, probably a different user tries to get it... user: ${userId}, keyId: ${keyId}`);
+    return null;
+  }
   rsa.importKey(res.PrivateKey._, 'pkcs1-private-pem');
   try {
     var decyrptedContent = rsa.decrypt(content, 'UTF8');

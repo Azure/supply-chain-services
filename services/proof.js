@@ -35,18 +35,24 @@ async function getProof(opts) {
     }
     else {
       var decrypted = await key.decrypt(userId, trackingId, result.encryptedProof);
-
-      // ensure we always return a valid json, even if we get back a string
-      var decryptedJson = { rawContent : decrypted};
-
-      try {
-        decryptedJson = JSON.parse(decrypted);
+      
+      if (!decrypted) {
+        // a different user tried to read the key, we can't decrypt it
+        proof = result.encryptedProof
       }
-      catch(err) {
-        console.warn(`invalid decrypted json: ${decrypted}: ${err.message}`);
-      };
+      else {
+        // ensure we always return a valid json, even if we get back a string
+        var decryptedJson = { rawContent : decrypted};
+      
+        try {
+          decryptedJson = JSON.parse(decrypted);
+        }
+        catch(err) {
+          console.warn(`invalid decrypted json: ${decrypted}: ${err.message}`);
+        };
 
-      proof = decryptedJson;     
+        proof = decryptedJson;     
+      }
     }
 
     // check if we got a valid proof
@@ -82,8 +88,8 @@ async function storeProof(opts) {
   var hash = sha256(proofToEncryptStr);
 
   var publicProof = JSON.stringify({
-    encryptedProofHash : hash.toUpperCase(),
-    publicProof : opts.publicProof
+    encryptedProofHash: hash.toUpperCase(),
+    publicProof: opts.publicProof
   });
 
   var encryptedProof = await key.encrypt(userId, opts.trackingId, proofToEncryptStr);

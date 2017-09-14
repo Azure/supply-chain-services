@@ -55,7 +55,7 @@ The following request adds a new proof to the chain:
 {
   "trackingId" : "trackingId_1",
   "userId" : "producer_01",
-  "encryptedProof": {
+  "proofToEncrypt": {
     "proof": "This content will be encrypted before storing"
   },
   "publicProof" : {
@@ -84,7 +84,7 @@ The following request adds a new proof that is chained to the previous one:
   "trackingId" : "trackingId_2",
   "userId" : "producer_02",
   "previousTrackingId": "trackingId_1",
-  "encryptedProof": {
+  "proofToEncrypt": {
     "proof": "This content will be encrypted before storing"
   },
   "publicProof" : {
@@ -136,7 +136,7 @@ A `GET` on `/api/proof/trackingId_1?userId=producer_01&decrypt=1` returns the `e
   {
     "trackingId": "trackingId_1",
     "owner": "0x422d337a0375a5108c48706901587a80c8dbef7c",
-    "encryptedProof": {
+    "proofToEncrypt": {
       "value": "This content will be encrypted before storing"
     },
     "publicProof": {
