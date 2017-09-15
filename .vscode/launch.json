@@ -8,12 +8,13 @@
       "type": "node",
       "request": "launch",
       "name": "Launch Program",
-      "program": "${workspaceRoot}\\server",
+      "program": "${workspaceRoot}/server",
       "outFiles": [
         "${workspaceRoot}/out/**/*.js"
       ],
       "env": {
-        "NODE_ENV": "testRpc"
+        "NODE_ENV": "testRpc",
+        "AUTH_TOKEN": "18ec2e14-d4b4-412b-ab7a-e6676033a341"
       }
     }
   ]

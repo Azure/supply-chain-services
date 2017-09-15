@@ -13,7 +13,7 @@ var HttpStatus = require('http-status-codes');
 var api = require('./api');
 var utils = require('./utils');
 
-var port = process.env.PORT || 443;
+var port = process.env.PORT || 8443;
 var app = express();
 var serverOptions = {};
 
@@ -36,14 +36,22 @@ else { // dev
   serverOptions.key = fs.readFileSync('./cert/server.key');
 }
 
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(expressValidator());
 
 // middleware to log all incoming requests
 app.use((req, res, next) => {
-	console.log(`url: ${req.method} ${req.originalUrl} ${util.inspect(req.body || {})}, headers: ${util.inspect(req.headers)}`);
-	return next();
+  
+  // basic authentication until the actual one is implemeneted
+  var authToken = process.env["AUTH_TOKEN"];
+  if (req.headers["auth_token"] !== authToken) {
+    return res.status(HttpStatus.FORBIDDEN).json({ error: "authentication token was not provided" });
+  }
+
+  console.log(`url: ${req.method} ${req.originalUrl} ${util.inspect(req.body || {})}, headers: ${util.inspect(req.headers)}`);  
+  return next();
 });
 
 // attach API to server
@@ -52,6 +60,7 @@ app.use('/api', api);
 app.get('/', (req, res) => {
 	return res.end(`iBera Service in on...`);
 });
+
 
 if (utils.isProd) {
 	// in prod we will use Azure's certificate to use ssl.
@@ -64,7 +73,7 @@ if (utils.isProd) {
 }
 else {
 	// this is development environment, use a local ssl server with self signed certificates
-	https.createServer(serverOptions, app).listen(port, err => {
+	http.createServer(app).listen(port, err => {
 		if (err) return console.error(err);
 		console.info(`server is listening on port ${port}`);
 	});
