@@ -22,6 +22,10 @@ app.get('/:trackingId', async (req, res) => {
   var trackingId = decodeURIComponent(req.params.trackingId);
   var userId = req.headers['user-id'];
   
+  if (!userId) {
+    return res.status(HttpStatus.BAD_REQUEST).json({ error: 'userId was not found in headers' });
+  }
+
   var opts = { 
     trackingId, 
     decrypt: req.sanitizeQuery('decrypt').toBoolean(),
