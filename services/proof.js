@@ -89,10 +89,6 @@ async function storeProof(opts) {
 
   var publicProof = opts.publicProof;
   publicProof.encryptedProofHash = hash.toUpperCase();
-  /*var publicProof = JSON.stringify({
-    encryptedProofHash: hash.toUpperCase(),
-    publicProof: opts.publicProof
-  });*/
 
   var encryptedProof = await key.encrypt(userId, opts.trackingId, proofToEncryptStr);
 
