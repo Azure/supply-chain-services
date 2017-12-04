@@ -87,10 +87,8 @@ async function storeProof(opts) {
   var proofToEncryptStr = JSON.stringify(opts.proofToEncrypt);
   var hash = sha256(proofToEncryptStr);
 
-  var publicProof = JSON.stringify({
-    encryptedProofHash: hash.toUpperCase(),
-    publicProof: opts.publicProof
-  });
+  var publicProof = opts.publicProof;
+  publicProof.encryptedProofHash = hash.toUpperCase();
 
   var encryptedProof = await key.encrypt(userId, opts.trackingId, proofToEncryptStr);
 
@@ -98,7 +96,7 @@ async function storeProof(opts) {
     trackingId: opts.trackingId, 
     previousTrackinId: opts.previousTrackingId, 
     encryptedProof: encryptedProof, 
-    publicProof: publicProof,
+    publicProof: JSON.stringify(publicProof),
     config: { 
       from: config.ACCOUNT_ADDRESS, 
       password: config.ACCOUNT_PASSWORD
