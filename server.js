@@ -50,7 +50,7 @@ app.use((req, res, next) => {
 app.use('/api', api);
 
 app.get('/', (req, res) => {
-	return res.end(`iBera Service in on...`);
+	return res.end(`Supply Chain Service in on...`);
 });
 
 if (utils.isProd) {

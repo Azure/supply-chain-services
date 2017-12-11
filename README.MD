@@ -1,4 +1,4 @@
-# ibera-services
+# supply-chain-services
 
 
 
@@ -18,7 +18,7 @@ When deploying to production, fill these values in the environment variables.
 
 ### update smart contracts
 
-Open the ibera-smart-contracts project and update your contract
+Open the supply-chain-smart-contracts project and update your contract
 run `truffle deploy` 
 open the built contract in the `build` folder and copy the abi portion into the clipboard
 copy it into http://www.textfixer.com/tools/remove-line-breaks.php to remove the line breaks
